@@ -1,0 +1,83 @@
+.navbar {
+  width: 100%;
+  height: 70px;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  padding: 0 6vw;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+/* Logo */
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.nav-logo span {
+  color: #0f766e;
+}
+
+/* Links */
+.nav-links {
+  display: flex;
+  gap: 1.8rem;
+  align-items: center;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: #334155;
+  font-weight: 500;
+  transition: 0.3s;
+  white-space: nowrap; /* مهم */
+}
+
+.nav-links a:hover {
+  color: #0f766e;
+}
+
+/* Hidden */
+.hidden-link {
+  display: none;
+}
+
+/* 📱 Responsive — shrink NOT stack */
+@media (max-width: 768px) {
+  .navbar {
+    padding: 0 1rem;
+    height: 64px;
+  }
+
+  .nav-logo {
+    font-size: 1.05rem;
+  }
+
+  .nav-links {
+    gap: 0.9rem;
+  }
+
+  .nav-links a {
+    font-size: 0.85rem;
+  }
+}
+
+/* 📱📱 very small screens */
+@media (max-width: 480px) {
+  .nav-logo {
+    font-size: 0.95rem;
+  }
+
+  .nav-links a {
+    font-size: 0.8rem;
+  }
+}

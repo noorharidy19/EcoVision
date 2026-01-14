@@ -1,0 +1,175 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Inter", sans-serif;
+}
+
+/* Ensure the app can fill the viewport */
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+}
+
+/* Prevent horizontal scroll caused by wide children */
+body {
+  overflow-x: hidden;
+}
+
+/* PAGE */
+.arch-page {
+  min-height: 100vh;
+  width: 100%;
+  min-width: 100vw;
+  background: #ffffff;
+}
+
+/* HERO */
+.hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 4rem 6vw;
+  background: linear-gradient(
+    120deg,
+    #ffffff 60%,
+    #d1fae5 60%
+  );
+}
+
+/* TEXT */
+.hero-text {
+  max-width: 520px;
+  flex: 1 1 320px;
+}
+
+.hero-text h1 {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.hero-text h1 span {
+  color: #0f766e;
+}
+
+.hero-text h3 {
+  margin: 1rem 0;
+  font-weight: 500;
+  color: #334155;
+}
+
+.hero-text p {
+  color: #475569;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+/* BUTTONS */
+.hero-buttons {
+  display: flex;
+  gap: 1rem;
+}
+
+.primary-btn {
+  background: #0f766e;
+  color: white;
+  border: none;
+  padding: 0.85rem 1.7rem;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: 0.3s ease;
+}
+
+.primary-btn:hover {
+  background: #115e59;
+}
+
+.secondary-btn {
+  background: transparent;
+  border: 2px solid #0f766e;
+  color: #0f766e;
+  padding: 0.85rem 1.7rem;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: 0.3s ease;
+}
+
+.secondary-btn:hover {
+  background: #d1fae5;
+}
+
+/* MOCKUP CARDS */
+.hero-image {
+  position: relative;
+  width: 400px;
+  max-width: 100%;
+  height: auto;
+  flex: 0 0 400px;
+}
+
+.mockup-card {
+  position: absolute;
+  width: 260px;
+  height: 180px;
+  background: white;
+  border-radius: 14px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+  top: 40px;
+  right: 0;
+}
+
+.mockup-card.second {
+  top: 120px;
+  right: 120px;
+  background: #ecfdf5;
+}
+
+/* FEATURES */
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 2rem;
+  padding: 4rem 6vw;
+  background: #f8fafc;
+}
+
+.feature-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+.feature-card h4 {
+  color: #0f766e;
+  margin-bottom: 0.6rem;
+  font-size: 1.1rem;
+}
+
+.feature-card p {
+  color: #475569;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .hero {
+    flex-direction: column;
+    padding: 3rem 1.5rem;
+    background: #ffffff;
+  }
+
+  .hero-image {
+    margin-top: 3rem;
+  }
+
+  .hero-text h1 {
+    font-size: 2.2rem;
+  }
+}

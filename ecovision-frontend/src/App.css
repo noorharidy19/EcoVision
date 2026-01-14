@@ -1,0 +1,27 @@
+/* Global reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Root app container */
+#root {
+  min-height: 100vh;
+  width: 100%;
+  font-family: "Inter", sans-serif;
+  background-color: #f5f7fa;
+}
+
+/* Links */
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Utility */
+.center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
