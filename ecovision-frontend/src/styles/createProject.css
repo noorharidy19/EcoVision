@@ -1,0 +1,123 @@
+.create-layout {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  background: linear-gradient(120deg, #ffffff 60%, #dffaf0 40%);
+}
+
+/* LEFT SIDE */
+.design-space {
+  padding: 80px;
+}
+
+.design-space h1 {
+  font-size: 42px;
+  color: #0f172a;
+}
+
+.design-space p {
+  max-width: 500px;
+  color: #475569;
+  margin: 20px 0 40px;
+}
+
+.design-placeholder {
+  height: 360px;
+  border-radius: 20px;
+  background: #f1fdf8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #10b981;
+  font-weight: 600;
+  font-size: 18px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
+}
+
+/* RIGHT SIDE */
+.project-panel {
+  background: #ffffff;
+  margin: 80px 60px;
+  padding: 40px;
+  border-radius: 24px;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.project-panel h2 {
+  font-size: 28px;
+  color: #065f46;
+}
+
+/* Inputs */
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input-group label {
+  font-size: 14px;
+  color: #475569;
+}
+
+.input-group input {
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  font-size: 15px;
+}
+
+.input-group input:focus {
+  outline: none;
+  border-color: #34d399;
+}
+
+/* Upload */
+.upload-box {
+  border: 2px dashed #a7f3d0;
+  border-radius: 14px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+}
+
+
+.upload-box span {
+  color: #059669;
+  font-weight: 500;
+}
+
+/* Button */
+.create-btn {
+  margin-top: 10px;
+  padding: 14px;
+  border-radius: 14px;
+  background: #22c55e;
+  color: white;
+  border: none;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.create-btn:hover {
+  background: #16a34a;
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .create-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .design-space {
+    padding: 40px;
+  }
+
+  .project-panel {
+    margin: 20px;
+  }
+}

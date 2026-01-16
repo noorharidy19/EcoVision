@@ -7,6 +7,7 @@ import Dashboard from "./pages/Dashboard";
 import ProjectView from "./pages/ProjectView";
 import MyProjects from "./pages/MyProjects";
 import NotFound from "./pages/NotFound";
+import CreateProject from "./pages/CreateProject";
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/project/:id" element={<ProjectView />} />
         <Route path="*" element={<NotFound />} />
+        <Route path="/createproject" element={<CreateProject />} />
         <Route path="/myprojects" element={<MyProjects />} />
       </Routes>
     </BrowserRouter>
@@ -26,3 +28,4 @@ function App() {
 }
 
 export default App;
+
