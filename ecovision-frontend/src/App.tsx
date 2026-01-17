@@ -8,6 +8,7 @@ import ProjectView from "./pages/ProjectView";
 import MyProjects from "./pages/MyProjects";
 import NotFound from "./pages/NotFound";
 import CreateProject from "./pages/CreateProject";
+import DesignWorkspace from "./pages/DesignWorkspace";
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
         <Route path="*" element={<NotFound />} />
         <Route path="/createproject" element={<CreateProject />} />
         <Route path="/myprojects" element={<MyProjects />} />
+        <Route path="/designworkspace" element={<DesignWorkspace />} />
       </Routes>
     </BrowserRouter>
   );
