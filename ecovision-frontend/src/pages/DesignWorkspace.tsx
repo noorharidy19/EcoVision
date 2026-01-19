@@ -22,7 +22,7 @@ const DesignWorkspace = () => {
 
         </div>
 <div > 
-    <input type="text" value="Edit Project (optional)" className="edit-input-btn"/>
+    <input type="text" placeholder="Edit Project (optional)" className="edit-input-btn"/>
     <button className="edit-project-btn">
            confirm
           </button></div>
