@@ -18,6 +18,19 @@
   color: #0f172a;
   margin-bottom: 3rem;
 }
+.admin-btn {
+  display: inline-block;
+  background: #0f766e;
+  color: white;
+  padding: 0.7rem 1.4rem;
+  border-radius: 10px;
+  text-decoration: none;
+  transition: 0.3s;
+}
+
+.admin-btn:hover {
+  background: #115e59;
+}
 
 
 .admin-cards {

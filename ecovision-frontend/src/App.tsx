@@ -11,6 +11,11 @@ import CreateProject from "./pages/CreateProject";
 import DesignWorkspace from "./pages/DesignWorkspace";
 import ProjectsList from "./pages/ProjectsList";
 import AdminDashboard from "./pages/AdminBoard";
+import Logs from "./pages/logs";
+import AIModels from "./pages/models";
+import Projects from "./pages/projAdmin";
+import ManageUsers from "./pages/users";
+import Materials from "./pages/materials";
 
 function App() {
   return (
@@ -29,7 +34,13 @@ function App() {
         <Route path="/" element={<ProjectsList />} />
         <Route path="/workspace/:id" element={<DesignWorkspace />} />
         <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/materials" element={<Materials />} />
+        <Route path="/users" element={<ManageUsers />} />
+        <Route path="/projects" element={<Projects />} />
+        <Route path="/ai-models" element={<AIModels />} />
+        <Route path="/logs" element={<Logs />} />
       </Routes>
+   
     </BrowserRouter>
   );
 }
