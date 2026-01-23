@@ -10,6 +10,7 @@ import NotFound from "./pages/NotFound";
 import CreateProject from "./pages/CreateProject";
 import DesignWorkspace from "./pages/DesignWorkspace";
 import ProjectsList from "./pages/ProjectsList";
+import AdminDashboard from "./pages/AdminBoard";
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
         <Route path="/designworkspace" element={<DesignWorkspace />} />
         <Route path="/" element={<ProjectsList />} />
         <Route path="/workspace/:id" element={<DesignWorkspace />} />
+        <Route path="/admin" element={<AdminDashboard />} />
       </Routes>
     </BrowserRouter>
   );

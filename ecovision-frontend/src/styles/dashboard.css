@@ -5,19 +5,19 @@
   font-family: "Inter", sans-serif;
 }
 
-/* Ensure the app can fill the viewport */
+
 html, body, #root {
   height: 100%;
   width: 100%;
   margin: 0;
 }
 
-/* Prevent horizontal scroll caused by wide children */
+
 body {
   overflow-x: hidden;
 }
 
-/* PAGE */
+
 .arch-page {
   min-height: 100vh;
   width: 100%;
@@ -67,7 +67,7 @@ body {
   margin-bottom: 2rem;
 }
 
-/* BUTTONS */
+
 .hero-buttons {
   display: flex;
   gap: 1rem;
@@ -103,7 +103,7 @@ body {
   background: #d1fae5;
 }
 
-/* MOCKUP CARDS */
+
 .hero-image {
   position: relative;
   width: 400px;
@@ -129,7 +129,6 @@ body {
   background: #ecfdf5;
 }
 
-/* FEATURES */
 .features {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -157,7 +156,7 @@ body {
   line-height: 1.6;
 }
 
-/* RESPONSIVE */
+
 @media (max-width: 900px) {
   .hero {
     flex-direction: column;
