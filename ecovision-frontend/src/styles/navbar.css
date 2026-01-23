@@ -13,7 +13,7 @@
   box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 
-/* Logo */
+
 .nav-logo {
   display: flex;
   align-items: center;
@@ -39,19 +39,19 @@
   color: #334155;
   font-weight: 500;
   transition: 0.3s;
-  white-space: nowrap; /* مهم */
+  white-space: nowrap; 
 }
 
 .nav-links a:hover {
   color: #0f766e;
 }
 
-/* Hidden */
+
 .hidden-link {
   display: none;
 }
 
-/* 📱 Responsive — shrink NOT stack */
+
 @media (max-width: 768px) {
   .navbar {
     padding: 0 1rem;
@@ -71,7 +71,7 @@
   }
 }
 
-/* 📱📱 very small screens */
+
 @media (max-width: 480px) {
   .nav-logo {
     font-size: 0.95rem;

@@ -8,10 +8,10 @@
 .dashboard-title {
   font-size: 2rem;
   margin-bottom: 2rem;
-  color: #0f766e; /* theme green */
+  color: #0f766e; 
 }
 
-/* Grid for project cards */
+
 .projects-grid {
   display: flex;
   flex-wrap: wrap;
@@ -64,12 +64,12 @@
   background-color: #0d5f52;
 }
 
-/* Buttons inside card should not trigger card click */
+
 .card-buttons button {
   width: 45%;
 }
 
-/* Responsive */
+
 @media (max-width: 768px) {
   .projects-grid {
     flex-direction: column;
