@@ -1,9 +1,12 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import "../styles/Admin.css";
+
 type AdminCard = {
   title: string;
   description: string;
   action: string;
+  path: string;
 };
 
 const cards: AdminCard[] = [
@@ -11,29 +14,33 @@ const cards: AdminCard[] = [
     title: "Manage Users",
     description: "Add, edit, delete users and assign admin roles.",
     action: "Open",
+    path: "/users",
   },
   {
     title: "Projects",
     description: "View all existing projects and their status.",
     action: "View",
+    path: "/projects",
   },
   {
     title: "AI Models",
     description: "Control AI models, versions, and configurations.",
     action: "Edit",
+    path: "/ai-models",
   },
   {
     title: "Materials",
     description: "Manage sustainable materials database.",
     action: "Manage",
+    path: "/materials",
   },
   {
     title: "System Logs",
     description: "View user activity and system logs.",
     action: "View Logs",
+    path: "/logs",
   },
 ];
-
 const AdminDashboard: React.FC = () => {
   return (
     <div className="admin-page">
@@ -44,7 +51,9 @@ const AdminDashboard: React.FC = () => {
           <div className="admin-card" key={index}>
             <h3>{card.title}</h3>
             <p>{card.description}</p>
-            <button>{card.action}</button>
+            <Link to={card.path} className="admin-btn">
+              {card.action}
+            </Link>
           </div>
         ))}
       </div>
@@ -53,3 +62,4 @@ const AdminDashboard: React.FC = () => {
 };
 
 export default AdminDashboard;
+
