@@ -1,12 +1,16 @@
 from fastapi import APIRouter, Depends, UploadFile, File, Form
 from sqlalchemy.orm import Session
-
+import os
+import shutil
 from app.core.database import get_db
 from app.models.project import Project
 from app.schemas.project import ProjectResponse
 from app.services.file_storage import save_uploaded_file
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
+
+UPLOAD_DIR = "uploaded_files"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 @router.post("/", response_model=ProjectResponse)
 def create_project(
@@ -15,16 +19,24 @@ def create_project(
     file: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
+    
+    
+    file_path = os.path.join(UPLOAD_DIR, file.filename)
+
     file_path = save_uploaded_file(file)
 
-    project = Project(
+    new_project = Project(
         name=name,
         location=location,
         file_path=file_path
     )
 
-    db.add(project)
+    db.add(new_project)
     db.commit()
-    db.refresh(project)
+    db.refresh(new_project)
 
-    return project
+    return new_project
+
+@router.get("/", response_model=list[ProjectResponse])
+def get_projects(db: Session = Depends(get_db)):
+    return db.query(Project).all()

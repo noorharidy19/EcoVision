@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from datetime import datetime
 
 class ProjectCreate(BaseModel):
     name: str
@@ -6,7 +7,10 @@ class ProjectCreate(BaseModel):
 
 class ProjectResponse(ProjectCreate):
     id: int
+    name: str
     file_path: str
+    created_at: datetime
 
     class Config:
-        from_attributes = True
+     from_attributes = True
+
