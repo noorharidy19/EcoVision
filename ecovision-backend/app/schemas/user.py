@@ -5,10 +5,11 @@ from typing import Optional
 class UserBase(BaseModel):
     email: EmailStr
     full_name: Optional[str] = None
+    phone_number: Optional[str] = None
 
 
 class UserCreate(UserBase):
-    pass
+    password: str
 
 
 class UserResponse(UserBase):
@@ -16,4 +17,4 @@ class UserResponse(UserBase):
     role: str
 
     class Config:
-        from_attributes = True
+        orm_mode = True
