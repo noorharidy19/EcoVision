@@ -5,6 +5,8 @@ from datetime import timedelta
 from app.core.database import get_db
 from app.schemas.user import UserCreate, UserResponse
 from app.services.user_service import create_user
+from app.schemas.user import UserUpdate
+from app.services.user_service import update_user
 from app.core.security import verify_password, create_access_token, decode_access_token
 from app.models.user import User
 from app.core.config import settings
@@ -80,6 +82,15 @@ def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
 @router.get("/me", response_model=UserResponse)
 def read_current_user(current_user: User = Depends(get_current_user)):
     return current_user
+
+
+@router.put("/me", response_model=UserResponse)
+def update_current_user(user_update: UserUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    try:
+        updated = update_user(db, current_user.id, user_update)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    return updated
 
 
 @router.post("/logout")

@@ -18,3 +18,9 @@ class UserResponse(UserBase):
 
     class Config:
         orm_mode = True
+
+
+class UserUpdate(BaseModel):
+    full_name: Optional[str] = None
+    phone_number: Optional[str] = None
+    password: Optional[str] = None

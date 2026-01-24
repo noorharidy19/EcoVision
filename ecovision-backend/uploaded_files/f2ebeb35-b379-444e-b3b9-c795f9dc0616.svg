@@ -1,0 +1,10 @@
+<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+<rect x="20" y="20" width="70.71067811865476" height="70.71067811865476" fill="lightblue" stroke="black" stroke-width="2"/>
+<text x="55.35533905932738" y="55.35533905932738" font-size="14" text-anchor="middle" alignment-baseline="middle">Bedroom</text>
+<rect x="110.71067811865476" y="20" width="38.72983346207417" height="38.72983346207417" fill="lightblue" stroke="black" stroke-width="2"/>
+<text x="130.07559484969184" y="39.364916731037084" font-size="14" text-anchor="middle" alignment-baseline="middle">Kitchen</text>
+<rect x="169.44051158072892" y="20" width="54.772255750516614" height="54.772255750516614" fill="lightblue" stroke="black" stroke-width="2"/>
+<text x="196.82663945598722" y="47.38612787525831" font-size="14" text-anchor="middle" alignment-baseline="middle">Living Room</text>
+<rect x="244.21276733124554" y="20" width="31.622776601683796" height="31.622776601683796" fill="lightblue" stroke="black" stroke-width="2"/>
+<text x="260.02415563208746" y="35.8113883008419" font-size="14" text-anchor="middle" alignment-baseline="middle">Bath</text>
+</svg>
