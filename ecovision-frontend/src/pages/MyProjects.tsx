@@ -1,14 +1,24 @@
 import "../styles/myprojects.css";
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+
+interface Project {
+  id: number;
+  name: string;
+  location: string;
+  file_path: string;
+}
 
 const MyProjects = () => {
   const navigate = useNavigate();
+  const [projects, setProjects] = useState<Project[]>([]);
 
-  const projects = [
-    { id: 1, name: "Project 1" },
-    { id: 2, name: "Project 2" },
-    { id: 3, name: "Project 3" }
-  ];
+  useEffect(() => {
+    fetch("http://127.0.0.1:8000/projects")
+      .then((res) => res.json())
+      .then((data) => setProjects(data))
+      .catch((err) => console.error("Error fetching projects:", err));
+  }, []);
 
   return (
     <div className="dashboard-container">
@@ -30,10 +40,11 @@ const MyProjects = () => {
             onClick={() => navigate(`/project/${proj.id}`)}
           >
             <h3>{proj.name}</h3>
-            <p>Your saved project</p>
+            <p>{proj.location}</p>
+            <p>{proj.file_path}</p>
             <div className="card-buttons">
-              <button onClick={() => navigate(`/project/${proj.id}`)}>View</button>
-              <button onClick={() => navigate(`/project/${proj.id}/edit`)}>Edit</button>
+              <button>View</button>
+              <button>Edit</button>
             </div>
           </div>
         ))}

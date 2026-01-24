@@ -32,8 +32,8 @@ function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/project/:id" element={<ProjectView />} />
         <Route path="/createproject" element={<CreateProject />} />
+        <Route path="/designworkspace" element={<DesignWorkspace />} /> 
         <Route path="/myprojects" element={<MyProjects />} />
-        <Route path="/designworkspace" element={<DesignWorkspace />} />
         <Route path="/" element={<ProjectsList />} />
         <Route path="/workspace/:id" element={<DesignWorkspace />} />
         <Route path="/admin" element={<RequireRole roles={["admin"]}><AdminDashboard /></RequireRole>} />

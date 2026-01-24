@@ -1,37 +1,32 @@
 import { useEffect, useState } from "react";
-import { fetchProjects } from "../services/projectService";
 
 interface Project {
   id: number;
   name: string;
   location: string;
   file_path: string;
+  created_at: string;
 }
 
 const ProjectsList = () => {
   const [projects, setProjects] = useState<Project[]>([]);
 
   useEffect(() => {
-    fetchProjects().then(setProjects).catch(console.error);
+    fetch("http://127.0.0.1:8000/projects")
+      .then((res) => res.json())
+      .then((data) => setProjects(data))
+      .catch((err) => console.error(err));
   }, []);
 
   return (
-    <div style={{ padding: 40 }}>
-      <h1>Your Projects</h1>
+    <div style={{ padding: "20px" }}>
+      <h2>My Projects</h2>
 
       {projects.map((project) => (
-        <div
-          key={project.id}
-          style={{
-            padding: 20,
-            marginBottom: 12,
-            borderRadius: 12,
-            background: "#f1fdf8",
-            cursor: "pointer",
-          }}
-        >
-          <h3>{project.name}</h3>
-          <p>{project.location}</p>
+        <div key={project.id} style={{ border: "1px solid #ccc", marginBottom: "10px", padding: "10px" }}>
+          <p><strong>Name:</strong> {project.name}</p>
+          <p><strong>Location:</strong> {project.location}</p>
+          <p><strong>File:</strong> {project.file_path}</p>
         </div>
       ))}
     </div>
