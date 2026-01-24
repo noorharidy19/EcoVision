@@ -1,12 +1,15 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Navbar from "./components/layout/Navbar";
+import { AuthProvider } from "./context/AuthContext";
+import RequireAuth from "./components/RequireAuth";
+import RequireRole from "./components/RequireRole";
+import Profile from "./pages/Profile";
 
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
 import ProjectView from "./pages/ProjectView";
 import MyProjects from "./pages/MyProjects";
-import NotFound from "./pages/NotFound";
 import CreateProject from "./pages/CreateProject";
 import DesignWorkspace from "./pages/DesignWorkspace";
 import ProjectsList from "./pages/ProjectsList";
@@ -19,29 +22,32 @@ import Materials from "./pages/materials";
 
 function App() {
   return (
-    <BrowserRouter>
-      <Navbar />  
+    <AuthProvider>
+      <BrowserRouter>
+        <Navbar />
 
-      <Routes>
+        <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/project/:id" element={<ProjectView />} />
-        <Route path="*" element={<NotFound />} />
         <Route path="/createproject" element={<CreateProject />} />
         <Route path="/myprojects" element={<MyProjects />} />
         <Route path="/designworkspace" element={<DesignWorkspace />} />
         <Route path="/" element={<ProjectsList />} />
         <Route path="/workspace/:id" element={<DesignWorkspace />} />
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/materials" element={<Materials />} />
-        <Route path="/users" element={<ManageUsers />} />
-        <Route path="/projects" element={<Projects />} />
-        <Route path="/ai-models" element={<AIModels />} />
-        <Route path="/logs" element={<Logs />} />
+        <Route path="/admin" element={<RequireRole roles={["admin"]}><AdminDashboard /></RequireRole>} />
+        <Route path="/profile" element={<RequireAuth><Profile/></RequireAuth>} />
+        <Route path="/materials" element={<RequireRole roles={["admin"]}><Materials /></RequireRole>} />
+        <Route path="/users" element={<RequireRole roles={["admin"]}><ManageUsers /></RequireRole>} />
+        <Route path="/projects" element={<RequireRole roles={["admin"]}><Projects /></RequireRole>} />
+        <Route path="/ai-models" element={<RequireRole roles={["admin"]}><AIModels /></RequireRole>} />
+        <Route path="/logs" element={<RequireRole roles={["admin"]}><Logs /></RequireRole>} />
+        <Route path="/profile" element={<Profile />} />
       </Routes>
    
-    </BrowserRouter>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 

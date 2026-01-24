@@ -10,7 +10,7 @@ const Signup = () => {
 
   const [errors, setErrors] = useState<any>({});
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const newErrors: any = {};
@@ -47,8 +47,40 @@ const Signup = () => {
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length === 0) {
-      console.log("Signup success");
-      // later → API call
+      try {
+        // truncate password to 72 bytes to match bcrypt limit
+        const pwBytes = new TextEncoder().encode(password);
+        let sendPassword = password;
+        if (pwBytes.length > 72) {
+          // truncate and decode safely
+          const truncated = pwBytes.slice(0, 72);
+          sendPassword = new TextDecoder().decode(truncated);
+        }
+
+        const base = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+        const res = await fetch(`${base}/auth/signup`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            full_name: fullName,
+            phone_number: phone,
+            email,
+            password: sendPassword,
+          }),
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          setErrors({ form: err.detail || "Signup failed" });
+          return;
+        }
+
+        // success — redirect or show message
+        console.log("Signup created");
+        window.location.href = "/login";
+      } catch (err) {
+        setErrors({ form: "Network error" });
+      }
     }
   };
 
@@ -77,20 +109,16 @@ const Signup = () => {
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
           />
-          {errors.phone && (
-            <span className="input-error">{errors.phone}</span>
-          )}
+          {errors.phone && <span className="input-error">{errors.phone}</span>}
 
           <label>Email</label>
           <input
-            type="text"   
+            type="text"
             placeholder="architect@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
-          {errors.email && (
-            <span className="input-error">{errors.email}</span>
-          )}
+          {errors.email && <span className="input-error">{errors.email}</span>}
 
           <label>Password</label>
           <input
@@ -99,9 +127,7 @@ const Signup = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          {errors.password && (
-            <span className="input-error">{errors.password}</span>
-          )}
+          {errors.password && <span className="input-error">{errors.password}</span>}
 
           <label>Confirm Password</label>
           <input
@@ -113,6 +139,8 @@ const Signup = () => {
           {errors.confirmPassword && (
             <span className="input-error">{errors.confirmPassword}</span>
           )}
+
+          {errors.form && <div className="input-error">{errors.form}</div>}
 
           <button type="submit">Sign Up</button>
         </form>

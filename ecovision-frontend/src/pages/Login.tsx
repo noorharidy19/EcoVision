@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import "../styles/login.css";
 
 const Login = () => {
   const navigate = useNavigate();
+  const auth = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -11,7 +13,7 @@ const Login = () => {
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     let valid = true;
@@ -35,7 +37,19 @@ const Login = () => {
     }
 
     if (valid) {
-      navigate("/dashboard");
+      try {
+        // login via auth context
+        const pwBytes = new TextEncoder().encode(password);
+        let sendPassword = password;
+        if (pwBytes.length > 72) {
+          const truncated = pwBytes.slice(0, 72);
+          sendPassword = new TextDecoder().decode(truncated);
+        }
+        await auth.login(email, sendPassword);
+        navigate("/profile");
+      } catch (err) {
+        setPasswordError("Login failed");
+      }
     }
   };
 
