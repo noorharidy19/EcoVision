@@ -1,6 +1,22 @@
+import React from "react";
 import "../styles/dashboard.css";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
-const Dashboard = () => {
+const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const goCreate = () => {
+    if (user) navigate("/createproject");
+    else navigate("/login");
+  };
+
+  const goMyProjects = () => {
+    if (user) navigate("/myprojects");
+    else navigate("/login");
+  };
+
   return (
     <div className="arch-page">
 
@@ -17,8 +33,8 @@ const Dashboard = () => {
           </p>
 
           <div className="hero-buttons">
-            <button className="primary-btn">Start New Project</button>
-            <button className="secondary-btn">View My Projects</button>
+            <button className="primary-btn" onClick={goCreate}>Start New Project</button>
+            <button className="secondary-btn" onClick={goMyProjects}>View My Projects</button>
           </div>
         </div>
 

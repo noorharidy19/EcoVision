@@ -1,7 +1,16 @@
 import "../../styles/navbar.css";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 const Navbar = () => {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
+
   return (
     <header className="navbar">
       {/* Logo */}
@@ -12,12 +21,19 @@ const Navbar = () => {
       {/* Links */}
       <nav className="nav-links">
         <Link to="/">Dashboard</Link>
-        <Link to="/login">Login</Link>
-        <Link to="/signup">Sign Up</Link>
-        {/* Hidden for now 
-        <Link to="/profile" className="hidden-link">My Profile</Link>
-        <Link to="/" className="hidden-link">Logout</Link>
-        */}
+        {user ? (
+          <>
+            <Link to="/profile">{user.full_name ? user.full_name : "Profile"}</Link>
+            <button className="nav-logout" onClick={handleLogout}>
+              Logout
+            </button>
+          </>
+        ) : (
+          <>
+            <Link to="/login">Login</Link>
+            <Link to="/signup">Sign Up</Link>
+          </>
+        )}
       </nav>
     </header>
   );
