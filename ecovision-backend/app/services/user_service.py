@@ -2,10 +2,6 @@ from sqlalchemy.orm import Session
 from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate
 from app.core.security import get_password_hash
-from sqlalchemy.orm import Session
-from app.models.user import User
-from app.schemas.user import UserCreate
-from app.core.security import get_password_hash
 
 
 def create_user(db: Session, user: UserCreate):
@@ -18,7 +14,8 @@ def create_user(db: Session, user: UserCreate):
         email=user.email,
         full_name=user.full_name,
         phone_number=user.phone_number,
-        password_hash=get_password_hash(user.password)
+        password_hash=get_password_hash(user.password),
+        role=user.role
     )
     db.add(db_user)
     db.commit()
@@ -46,3 +43,13 @@ def update_user(db: Session, user_id: int, user_update: UserUpdate):
     db.commit()
     db.refresh(db_user)
     return db_user
+
+def delete_user(db: Session, user_id: int):
+    db_user = db.query(User).filter(User.id == user_id).first()
+    if not db_user:
+        raise ValueError("User not found")
+
+    db.delete(db_user)
+    db.commit()
+    return db_user
+

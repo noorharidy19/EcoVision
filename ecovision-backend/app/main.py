@@ -16,6 +16,7 @@ from app.api.routes import users
 from app.api.routes import projects
 from app.api.routes import auth
 from fastapi.staticfiles import StaticFiles
+from app.api.routes import admin
 
 
 
@@ -35,6 +36,7 @@ app.include_router(users.router)
 app.include_router(projects.router)
 app.include_router(auth.router)
 app.include_router(files_protected.router)
+app.include_router(admin.router)
 
 
 
