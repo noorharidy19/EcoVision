@@ -30,19 +30,23 @@ def get_users(db: Session):
 def update_user(db: Session, user_id: int, user_update: UserUpdate):
     db_user = db.query(User).filter(User.id == user_id).first()
     if not db_user:
-        raise ValueError("User not found")
+        return None
 
+    if user_update.email is not None:
+        db_user.email = user_update.email
     if user_update.full_name is not None:
         db_user.full_name = user_update.full_name
     if user_update.phone_number is not None:
         db_user.phone_number = user_update.phone_number
+    if user_update.role is not None:
+        db_user.role = user_update.role
     if user_update.password:
         db_user.password_hash = get_password_hash(user_update.password)
 
-    db.add(db_user)
     db.commit()
     db.refresh(db_user)
     return db_user
+
 
 def delete_user(db: Session, user_id: int):
     db_user = db.query(User).filter(User.id == user_id).first()
