@@ -44,7 +44,7 @@ const CreateProject: React.FC = () => {
       }
 
       alert("Project created successfully!");
-      navigate("/projects");
+      navigate("/myprojects");
 
     } catch (error) {
       console.error("Error:", error);
