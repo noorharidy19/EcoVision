@@ -28,10 +28,15 @@ const CreateProject: React.FC = () => {
     formData.append("location", location);
     formData.append("file", file);
 
+    const token = localStorage.getItem("token");
+
     try {
       const response = await fetch("http://127.0.0.1:8000/projects", {
         method: "POST",
-        body: formData,
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        body: formData
       });
 
       if (!response.ok) {
@@ -39,7 +44,7 @@ const CreateProject: React.FC = () => {
       }
 
       alert("Project created successfully!");
-      navigate("/projects"); // go back to dashboard
+      navigate("/projects");
 
     } catch (error) {
       console.error("Error:", error);

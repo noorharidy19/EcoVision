@@ -86,3 +86,11 @@ body {
     .grid {
         grid-template-columns: 1fr;
     }
+
+table {
+  color: black;
+}
+
+th, td {
+  color: black;
+}

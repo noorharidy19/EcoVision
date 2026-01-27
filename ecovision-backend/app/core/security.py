@@ -45,3 +45,6 @@ def decode_access_token(token: str) -> dict:
         return payload
     except JWTError:
         raise
+
+def get_current_user():
+    pass
