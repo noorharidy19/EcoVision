@@ -17,6 +17,7 @@ import AdminDashboard from "./pages/AdminBoard";
 import Logs from "./pages/logs";
 import AIModels from "./pages/models";
 import Projects from "./pages/projAdmin";
+import Analysis from "./pages/Analysis";
 import Materials from "./pages/materials";
 import AdminUsers from "./pages/AdminUsers";
 
@@ -42,6 +43,7 @@ function App() {
         <Route path="/projects" element={<RequireRole roles={["admin"]}><Projects /></RequireRole>} />
         <Route path="/ai-models" element={<RequireRole roles={["admin"]}><AIModels /></RequireRole>} />
         <Route path="/logs" element={<RequireRole roles={["admin"]}><Logs /></RequireRole>} />
+        <Route path="analysis" element={<Analysis/>} />
         <Route path="/users" element={<RequireRole roles={["admin"]}><AdminUsers /></RequireRole>} />
       </Routes>
    
