@@ -6,6 +6,8 @@ from app.core.database import get_db
 from app.models.project import Project
 from app.schemas.project import ProjectResponse
 from app.services.file_storage import save_uploaded_file
+from app.api.routes.auth import get_current_user
+from app.models.user import User
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
 
@@ -17,7 +19,8 @@ def create_project(
     name: str = Form(...),
     location: str = Form(...),
     file: UploadFile = File(...),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     
     
@@ -28,7 +31,8 @@ def create_project(
     new_project = Project(
         name=name,
         location=location,
-        file_path=file_path
+        file_path=file_path,
+        user_id=current_user.id
     )
 
     db.add(new_project)

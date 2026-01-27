@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String
 from app.core.database import Base
+from sqlalchemy.orm import relationship
 
 class User(Base):
     __tablename__ = "users"
@@ -10,5 +11,7 @@ class User(Base):
     role = Column(String, default="Architect")
     password_hash = Column(String, nullable=False)
     phone_number = Column(String, nullable=True)
+    projects = relationship("Project", back_populates="user")
+
 
    

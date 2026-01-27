@@ -17,9 +17,9 @@ import AdminDashboard from "./pages/AdminBoard";
 import Logs from "./pages/logs";
 import AIModels from "./pages/models";
 import Projects from "./pages/projAdmin";
-import ManageUsers from "./pages/users";
 import Materials from "./pages/materials";
-import Analysis from "./pages/Analysis";
+import AdminUsers from "./pages/AdminUsers";
+
 
 function App() {
   return (
@@ -39,12 +39,10 @@ function App() {
         <Route path="/admin" element={<RequireRole roles={["admin"]}><AdminDashboard /></RequireRole>} />
         <Route path="/profile" element={<RequireAuth><Profile/></RequireAuth>} />
         <Route path="/materials" element={<RequireRole roles={["admin"]}><Materials /></RequireRole>} />
-        <Route path="/users" element={<RequireRole roles={["admin"]}><ManageUsers /></RequireRole>} />
         <Route path="/projects" element={<RequireRole roles={["admin"]}><Projects /></RequireRole>} />
         <Route path="/ai-models" element={<RequireRole roles={["admin"]}><AIModels /></RequireRole>} />
         <Route path="/logs" element={<RequireRole roles={["admin"]}><Logs /></RequireRole>} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/analysis" element={<Analysis />} />
+        <Route path="/users" element={<RequireRole roles={["admin"]}><AdminUsers /></RequireRole>} />
       </Routes>
    
       </BrowserRouter>

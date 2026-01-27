@@ -22,6 +22,8 @@ class UserResponse(UserBase):
 
 
 class UserUpdate(BaseModel):
+    email: Optional[EmailStr] = None
     full_name: Optional[str] = None
     phone_number: Optional[str] = None
     password: Optional[str] = None
+    role: str
