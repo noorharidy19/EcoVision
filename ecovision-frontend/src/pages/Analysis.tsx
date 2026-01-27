@@ -13,6 +13,7 @@ interface Project {
 const DesignWorkspace = () => {
   const { id } = useParams<{ id: string }>();
   const [project, setProject] = useState<Project | null>(null);
+  const [mode, setMode] = useState<"edit" | "sustainability" | "visual" | "thermal">("edit");
 
   useEffect(() => {
     if (id !== "new") {
@@ -39,15 +40,25 @@ const DesignWorkspace = () => {
               <p><strong>File:</strong> {project.file_path}</p>
             </div>
 
-            <div>
-              <input type="text" placeholder="Edit Project (optional)" className="edit-input-btn" />
-              <button className="edit-project-btn">Confirm</button>
-            </div>
+           
           </div>
         ) : (
           <p>Loading project...</p>
         )}
 
+        <div className="design-area">
+          <div className="workspace-toolbar">
+            <button onClick={() => setMode("sustainability")}>Sustainability</button>
+            <button onClick={() => setMode("visual")}>Visual Comfort</button>
+            <button onClick={() => setMode("thermal")}>Thermal Comfort</button>
+          </div>
+
+          <div className="design-preview">
+            {mode === "sustainability" && "Sustainability Analysis"}
+            {mode === "visual" && "Visual Comfort Analysis"}
+            {mode === "thermal" && "Thermal Comfort Analysis"}
+          </div>
+        </div>
       </div>
     </div>
   );

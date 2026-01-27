@@ -19,6 +19,7 @@ import AIModels from "./pages/models";
 import Projects from "./pages/projAdmin";
 import ManageUsers from "./pages/users";
 import Materials from "./pages/materials";
+import Analysis from "./pages/Analysis";
 
 function App() {
   return (
@@ -35,7 +36,6 @@ function App() {
         <Route path="/designworkspace" element={<DesignWorkspace />} /> 
         <Route path="/myprojects" element={<MyProjects />} />
         <Route path="/" element={<ProjectsList />} />
-        <Route path="/workspace/:id" element={<DesignWorkspace />} />
         <Route path="/admin" element={<RequireRole roles={["admin"]}><AdminDashboard /></RequireRole>} />
         <Route path="/profile" element={<RequireAuth><Profile/></RequireAuth>} />
         <Route path="/materials" element={<RequireRole roles={["admin"]}><Materials /></RequireRole>} />
@@ -44,6 +44,7 @@ function App() {
         <Route path="/ai-models" element={<RequireRole roles={["admin"]}><AIModels /></RequireRole>} />
         <Route path="/logs" element={<RequireRole roles={["admin"]}><Logs /></RequireRole>} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/analysis" element={<Analysis />} />
       </Routes>
    
       </BrowserRouter>

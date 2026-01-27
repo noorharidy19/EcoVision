@@ -26,7 +26,7 @@ const MyProjects = () => {
 
       <div className="projects-grid">
         {/* New Project Card */}
-        <div className="project-card" onClick={() => navigate("/project/new")}>
+        <div className="project-card" onClick={() => navigate("/createproject")}>
           <h3>New Project</h3>
           <p>Upload a 2D plan and start your project</p>
           <button>Create</button>
@@ -34,17 +34,15 @@ const MyProjects = () => {
 
         {/* Existing Projects */}
         {projects.map((proj) => (
-          <div
-            className="project-card"
-            key={proj.id}
-            onClick={() => navigate(`/project/${proj.id}`)}
-          >
+          <div key={proj.id} className="project-card">
             <h3>{proj.name}</h3>
             <p>{proj.location}</p>
             <p>{proj.file_path}</p>
             <div className="card-buttons">
-              <button>View</button>
-              <button>Edit</button>
+              <button   onClick={() => navigate("/openplan")}>Open</button>
+              <button  onClick={() => navigate("/designworkspace")}>Edit</button>
+              <button>Delete</button>
+              <button onClick={() => navigate("/analysis")}>Analysis</button>
             </div>
           </div>
         ))}
