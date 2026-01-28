@@ -8,6 +8,7 @@ from app.schemas.project import ProjectResponse
 from app.services.file_storage import save_uploaded_file
 from app.api.routes.auth import get_current_user
 from app.models.user import User
+from fastapi import HTTPException
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
 
@@ -42,5 +43,27 @@ def create_project(
     return new_project
 
 @router.get("/", response_model=list[ProjectResponse])
-def get_projects(db: Session = Depends(get_db)):
-    return db.query(Project).all()
+def get_projects(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+     if current_user.role == "admin":
+        return db.query(Project).all()
+     return db.query(Project).filter(Project.user_id == current_user.id).all()
+
+
+@router.get("/{project_id}", response_model=ProjectResponse)
+def get_project_by_id(
+    project_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    project = db.query(Project).filter(
+        Project.id == project_id,
+        Project.user_id == current_user.id
+    ).first()
+
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    return project

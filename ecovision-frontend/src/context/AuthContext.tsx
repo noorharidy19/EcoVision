@@ -11,7 +11,7 @@ type User = {
 type AuthContextType = {
   user: User | null;
   token: string | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<{ access_token: string }>;
   logout: () => void;
   refreshUser: (tokenArg?: string) => Promise<void>;
 };
@@ -53,20 +53,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const login = async (email: string, password: string) => {
-    const base = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
-    const res = await fetch(`${base}/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ email, password }),
-    });
-    if (!res.ok) throw new Error("Login failed");
-    const payload = await res.json();
-    const t = payload.access_token;
-    setToken(t);
-    localStorage.setItem("token", t);
-    await refreshUser(t);
-  };
+  const base = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
+  const res = await fetch(`${base}/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ email, password }),
+  });
+
+  const data = await res.json(); // ✅ define data first
+
+  if (!res.ok) throw new Error("Login failed");
+
+  const t = data.access_token;
+
+  setToken(t);
+  localStorage.setItem("token", t);
+  await refreshUser(t);
+
+  return data; // ✅ return token to Login.tsx
+};
+
 
   const logout = () => {
     const base = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";

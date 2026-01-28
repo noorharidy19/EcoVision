@@ -7,20 +7,35 @@ interface Project {
   location: string;
   file_path: string;
   created_at: string;
+  user_id: number;
 }
 
 export default function Projects() {
   const [projects, setProjects] = useState<Project[]>([]);
 
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/projects/")
-      .then((res) => res.json())
-      .then((data) => {
-        console.log("Projects from backend:", data); // debug
-        setProjects(data);
-      })
-      .catch((err) => console.error("Error fetching projects:", err));
-  }, []);
+  const token = localStorage.getItem("token"); // get token from login
+  if (!token) {
+    console.error("No token found");
+    return;
+  }
+
+  fetch("http://127.0.0.1:8000/projects/", {
+    headers: {
+      "Authorization": `Bearer ${token}`, // send token
+    },
+  })
+    .then(res => {
+      if (!res.ok) throw new Error("Failed to fetch projects: " + res.status);
+      return res.json();
+    })
+    .then(data => {
+      console.log("Projects from backend:", data); // debug
+      setProjects(data);
+    })
+    .catch(err => console.error("Error fetching projects:", err));
+}, []);
+
 
   return (
     <div className="page">
@@ -38,6 +53,7 @@ export default function Projects() {
                 <th>Location</th>
                 <th>File</th>
                 <th>Created At</th>
+                <th>User ID</th>
               </tr>
             </thead>
             <tbody>
@@ -48,6 +64,7 @@ export default function Projects() {
                   <td>{project.location}</td>
                   <td>{project.file_path}</td>
                   <td>{new Date(project.created_at).toLocaleString()}</td>
+                  <td>{project.user_id}</td>
                 </tr>
               ))}
             </tbody>

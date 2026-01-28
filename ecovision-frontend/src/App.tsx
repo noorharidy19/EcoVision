@@ -36,7 +36,7 @@ function App() {
         <Route path="/" element={<RequireNonAdmin><Dashboard /></RequireNonAdmin>} />
         <Route path="/project/:id" element={<RequireNonAdmin><ProjectView /></RequireNonAdmin>} />
         <Route path="/createproject" element={<RequireNonAdmin><CreateProject /></RequireNonAdmin>} />
-        <Route path="/designworkspace" element={<RequireNonAdmin><DesignWorkspace /></RequireNonAdmin>} /> 
+        <Route path="/designworkspace/:id" element={<RequireNonAdmin><DesignWorkspace /></RequireNonAdmin>} /> 
         <Route path="/myprojects" element={<RequireNonAdmin><MyProjects /></RequireNonAdmin>} />
         <Route path="/projects" element={<RequireNonAdmin><ProjectsList /></RequireNonAdmin>} />
         <Route path="/admin" element={<RequireRole roles={["admin"]}><AdminDashboard /></RequireRole>} />

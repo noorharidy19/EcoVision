@@ -14,14 +14,28 @@ const DesignWorkspace = () => {
   const { id } = useParams<{ id: string }>();
   const [project, setProject] = useState<Project | null>(null);
 
-  useEffect(() => {
-    if (id !== "new") {
-      fetch(`http://127.0.0.1:8000/projects/${id}`)
-        .then(res => res.json())
-        .then(data => setProject(data))
-        .catch(err => console.error(err));
+ useEffect(() => {
+  if (id !== "new") {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.error("No token found");
+      return;
     }
-  }, [id]);
+
+    fetch(`http://127.0.0.1:8000/projects/${id}`, {
+      headers: {
+        "Authorization": `Bearer ${token}`,
+      },
+    })
+      .then(res => {
+        if (!res.ok) throw new Error("Failed to fetch project: " + res.status);
+        return res.json();
+      })
+      .then(data => setProject(data))
+      .catch(err => console.error(err));
+  }
+}, [id]);
+
 
   if (id === "new") {
     return <p>Create a new project here...</p>;

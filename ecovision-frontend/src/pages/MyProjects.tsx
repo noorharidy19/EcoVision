@@ -14,11 +14,19 @@ const MyProjects = () => {
   const [projects, setProjects] = useState<Project[]>([]);
 
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/projects")
-      .then((res) => res.json())
-      .then((data) => setProjects(data))
-      .catch((err) => console.error("Error fetching projects:", err));
-  }, []);
+  fetch("http://127.0.0.1:8000/projects/", {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("token")}`
+    }
+  })
+    .then(res => {
+      if (!res.ok) throw new Error("Unauthorized");
+      return res.json();
+    })
+    .then(data => setProjects(data))
+    .catch(err => console.error("Error fetching projects:", err));
+}, []);
+
 
   return (
     <div className="dashboard-container">
@@ -40,7 +48,7 @@ const MyProjects = () => {
             <p>{proj.file_path}</p>
             <div className="card-buttons">
               <button   onClick={() => navigate("/openplan")}>Open</button>
-              <button  onClick={() => navigate("/designworkspace")}>Edit</button>
+              <button  onClick={() => navigate(`/designworkspace/${proj.id}`)}>Edit</button>
               <button>Delete</button>
               <button onClick={() => navigate("/analysis")}>Analysis</button>
             </div>
