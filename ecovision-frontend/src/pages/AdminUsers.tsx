@@ -11,6 +11,7 @@ type User = {
 
 const AdminUsers: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [editingUserId, setEditingUserId] = useState<number | null>(null);
   const [editedUser, setEditedUser] = useState<User | null>(null);
 
@@ -32,6 +33,16 @@ const AdminUsers: React.FC = () => {
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  const filteredUsers = users.filter((user) => {
+  const search = searchTerm.toLowerCase();
+
+  return (
+    user.full_name.toLowerCase().includes(search) ||
+    user.phone_number.toString().includes(search)
+  );
+});
+
 
   const handleCreateUser = async () => {
     await fetch("http://127.0.0.1:8000/admin/users", {
@@ -95,7 +106,16 @@ const AdminUsers: React.FC = () => {
   return (
     <div className="admin-page">
       <h1 className="admin-title">All Users (Admin View)</h1>
-
+        <div className="search-container">
+  <input
+    type="text"
+    placeholder="Search by Name or Phone number..."
+    value={searchTerm}
+    onChange={(e) => setSearchTerm(e.target.value)}
+    className="search-input"
+  />
+</div>
+       
       {/* ADD USER CARD */}
       <div className="admin-card">
         <h3>Add New User</h3>
@@ -110,7 +130,7 @@ const AdminUsers: React.FC = () => {
 
       {/* USERS CARDS */}
       <div className="admin-cards">
-        {users.map((user) => (
+        {filteredUsers.map((user) => (
           <div className="admin-card" key={user.id}>
             {editingUserId === user.id ? (
               <>
