@@ -1,0 +1,108 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Inter", sans-serif;
+}
+
+.admin-page {
+  min-height: 100vh;
+  padding: 4rem 6vw;
+  background: #f8fafc;
+}
+
+.admin-title {
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 3rem;
+}
+
+.admin-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+}
+
+.admin-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 18px;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+  position: relative;
+}
+
+.admin-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 6px;
+  width: 100%;
+  background: linear-gradient(90deg, #0f766e, #34d399);
+}
+
+.admin-card h3 {
+  color: #0f766e;
+  margin-bottom: 1rem;
+}
+
+.admin-card p {
+  color: #475569;
+  margin-bottom: 0.6rem;
+  font-size: 0.95rem;
+}
+
+.admin-card input,
+.admin-card select {
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+.admin-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.card-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 1rem;
+}
+
+button {
+  background: #0f766e;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+button:hover {
+  background: #115e59;
+}
+
+button.danger {
+  background: #dc2626;
+}
+
+button.danger:hover {
+  background: #b91c1c;
+}
+
+@media (max-width: 768px) {
+  .admin-title {
+    text-align: center;
+    font-size: 2rem;
+  }
+
+  .admin-page {
+    padding: 2rem 1.5rem;
+  }
+}

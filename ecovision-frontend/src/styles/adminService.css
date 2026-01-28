@@ -9,32 +9,35 @@ body {
   background: #f8fafc;
 }
 
+/* PAGE LAYOUT */
 .page {
   min-height: 100vh;
   padding: 4rem 6vw;
+  background: #f8fafc;
 }
 
 .title {
   font-size: 2.5rem;
   font-weight: 700;
   color: #0f172a;
-  margin-bottom: 3rem;
+  margin-bottom: 2.5rem;
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 2rem;
-}
-
+/* CARD */
 .card {
   background: white;
   padding: 2rem;
   border-radius: 18px;
   box-shadow: 0 15px 35px rgba(0,0,0,0.08);
   position: relative;
+  overflow-x: auto; /* مهم للـ table */
 }
 
+.card.large {
+  width: 100%;
+}
+
+/* TOP ACCENT */
 .card::before {
   content: "";
   position: absolute;
@@ -45,52 +48,62 @@ body {
   background: linear-gradient(90deg, #0f766e, #34d399);
 }
 
-.card h3 {
-  color: #0f766e;
-  margin-bottom: 0.7rem;
-}
-
-.card p {
-  color: #475569;
-  line-height: 1.6;
-  margin-bottom: 1.5rem;
-}
-
-.card.large {
-  max-width: 600px;
-}
-
-.btn {
-  display: inline-block;
-  background: #0f766e;
-  color: white;
-  padding: 0.7rem 1.4rem;
-  border-radius: 10px;
-  text-decoration: none;
-  transition: 0.3s;
-}
-
-.btn:hover {
-  background: #115e59;
-}
-
-@media (max-width: 768px) {
-  .title {
-    text-align: center;
-    font-size: 2rem;
-  }
-}
-    .page {
-        padding: 2rem 1.5rem;
-    }
-    .grid {
-        grid-template-columns: 1fr;
-    }
-
+/* TABLE */
 table {
-  color: black;
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  font-size: 15px;
 }
 
-th, td {
-  color: black;
+thead {
+  background: #f1fdf8;
+}
+
+th {
+  text-align: left;
+  padding: 14px;
+  color: #065f46;
+  font-weight: 600;
+  border-bottom: 2px solid #d1fae5;
+}
+
+td {
+  padding: 14px;
+  color: #334155;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+/* ROW HOVER */
+tbody tr:hover {
+  background: #f0fdf4;
+}
+
+/* FILE PATH */
+td:nth-child(4) {
+  font-size: 14px;
+  color: #0f766e;
+  word-break: break-all;
+}
+
+/* EMPTY STATE */
+.card p {
+  color: #64748b;
+  font-size: 16px;
+}
+
+/* RESPONSIVE */
+@media (max-width: 786px) {
+  .title {
+    font-size: 2rem;
+    text-align: center;
+  }
+
+  table {
+    font-size: 14px;
+  }
+
+  th, td {
+    padding: 10px;
+  }
 }

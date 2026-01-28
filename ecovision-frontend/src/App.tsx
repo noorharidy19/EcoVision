@@ -3,6 +3,7 @@ import Navbar from "./components/layout/Navbar";
 import { AuthProvider } from "./context/AuthContext";
 import RequireAuth from "./components/RequireAuth";
 import RequireRole from "./components/RequireRole";
+import RequireNonAdmin from "./components/RequireNonAdmin";
 import Profile from "./pages/Profile";
 
 import Login from "./pages/Login";
@@ -32,15 +33,16 @@ function App() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/project/:id" element={<ProjectView />} />
-        <Route path="/createproject" element={<CreateProject />} />
-        <Route path="/designworkspace" element={<DesignWorkspace />} /> 
-        <Route path="/myprojects" element={<MyProjects />} />
-        <Route path="/" element={<ProjectsList />} />
+        <Route path="/" element={<RequireNonAdmin><Dashboard /></RequireNonAdmin>} />
+        <Route path="/project/:id" element={<RequireNonAdmin><ProjectView /></RequireNonAdmin>} />
+        <Route path="/createproject" element={<RequireNonAdmin><CreateProject /></RequireNonAdmin>} />
+        <Route path="/designworkspace" element={<RequireNonAdmin><DesignWorkspace /></RequireNonAdmin>} /> 
+        <Route path="/myprojects" element={<RequireNonAdmin><MyProjects /></RequireNonAdmin>} />
+        <Route path="/projects" element={<RequireNonAdmin><ProjectsList /></RequireNonAdmin>} />
         <Route path="/admin" element={<RequireRole roles={["admin"]}><AdminDashboard /></RequireRole>} />
         <Route path="/profile" element={<RequireAuth><Profile/></RequireAuth>} />
         <Route path="/materials" element={<RequireRole roles={["admin"]}><Materials /></RequireRole>} />
-        <Route path="/projects" element={<RequireRole roles={["admin"]}><Projects /></RequireRole>} />
+        <Route path="/admin/projects" element={<RequireRole roles={["admin"]}><Projects /></RequireRole>} />
         <Route path="/ai-models" element={<RequireRole roles={["admin"]}><AIModels /></RequireRole>} />
         <Route path="/logs" element={<RequireRole roles={["admin"]}><Logs /></RequireRole>} />
         <Route path="analysis" element={<Analysis/>} />

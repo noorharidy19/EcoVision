@@ -20,7 +20,7 @@ const cards: AdminCard[] = [
     title: "Projects",
     description: "View all existing projects and their status.",
     action: "View",
-    path: "/projects",
+    path: "/admin/projects",
   },
   {
     title: "AI Models",

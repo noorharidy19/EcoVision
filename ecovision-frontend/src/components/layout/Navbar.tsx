@@ -20,7 +20,7 @@ const Navbar = () => {
 
       {/* Links */}
       <nav className="nav-links">
-        <Link to="/">Dashboard</Link>
+        <Link to={user && user.role && user.role.toLowerCase() === "admin" ? "/admin" : "/"}>Dashboard</Link>
         {user ? (
           <>
             <Link to="/profile">{user.full_name ? user.full_name : "Profile"}</Link>
