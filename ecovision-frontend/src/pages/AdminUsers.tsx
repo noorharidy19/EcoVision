@@ -56,7 +56,7 @@ const AdminUsers: React.FC = () => {
         full_name: fullName,
         phone_number: phone,
         password,
-        role: "user",
+        role: "ARCHITECT",
       }),
     });
 
@@ -158,8 +158,8 @@ const AdminUsers: React.FC = () => {
                     setEditedUser({ ...editedUser!, role: e.target.value })
                   }
                 >
-                  <option value="user">User</option>
-                  <option value="admin">Admin</option>
+                  <option value="ARCHITECT">ARCHITECT</option>
+                  <option value="ADMIN">ADMIN</option>
                 </select>
 
                 <div className="card-actions">
