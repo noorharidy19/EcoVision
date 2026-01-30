@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+import os
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.database import engine
 from app.models import User
@@ -17,6 +18,7 @@ from app.api.routes import projects
 from app.api.routes import auth
 from fastapi.staticfiles import StaticFiles
 from app.api.routes import admin
+from app.api.routes import floorplan
 
 
 
@@ -37,6 +39,12 @@ app.include_router(projects.router)
 app.include_router(auth.router)
 app.include_router(files_protected.router)
 app.include_router(admin.router)
+app.include_router(floorplan.router)
+
+
+
+# If RESET_DB is set to a truthy value, drop and recreate all tables.
+# WARNING: this will DELETE DATA. Use only in development or after backup.
 
 
 

@@ -14,6 +14,7 @@ class User(Base):
     password_hash = Column(String, nullable=False)
     phone_number = Column(String, nullable=True)
     projects = relationship("Project", back_populates="user")
+    
 
 
    

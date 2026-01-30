@@ -6,5 +6,5 @@ class UserRole(str, Enum):
 
     
 class FileType(str, Enum):
-    DWG = "DWG"
-    DXF = "DXF"
+    DWG = ".dwg"
+    DXF = ".dxf"

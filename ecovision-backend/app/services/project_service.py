@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.models.project import Project
 from app.models.user import User
 from app.models.enum import UserRole
-from app.services.file_storage import save_uploaded_file
+from app.services.file_storage import save_uploaded_file, upload_and_parse_floorplan
 import os
 
 UPLOAD_DIR = "uploaded_files"
@@ -13,6 +13,14 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 def create_project(name: str, location: str, file: UploadFile, db: Session, current_user: User) -> Project:
     """Create a new project with uploaded file."""
     file_path = save_uploaded_file(file)
+
+    # determine file type enum from extension
+    ext = os.path.splitext(file.filename)[1].lower()
+    try:
+        from app.models.enum import FileType
+        file_type = FileType(ext)
+    except Exception:
+        raise HTTPException(status_code=400, detail=f"Unsupported file type: {ext}")
 
     new_project = Project(
         name=name,
@@ -24,6 +32,12 @@ def create_project(name: str, location: str, file: UploadFile, db: Session, curr
     db.add(new_project)
     db.commit()
     db.refresh(new_project)
+
+    # create floorplan record and parse file
+    try:
+        upload_and_parse_floorplan(db, new_project.id, file_path, file_type)
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to save or parse floorplan")
 
     return new_project
 

@@ -14,3 +14,4 @@ class Project(Base):
 
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     user = relationship("User", back_populates="projects")
+    floorplans = relationship("Floorplan", back_populates="project")
