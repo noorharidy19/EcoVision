@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from uuid import UUID
-from app.models.enums import FileType
+from app.models.enum import FileType
 
 
 class FloorplanResponse(BaseModel):
@@ -11,3 +11,6 @@ class FloorplanResponse(BaseModel):
 
     class Config:
         from_attributes = True
+class FloorplanGenerateRequest(BaseModel):
+    dxf_data: dict
+    prompt: str
