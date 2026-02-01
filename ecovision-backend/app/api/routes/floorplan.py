@@ -11,6 +11,7 @@ import json
 router = APIRouter(prefix="/floorplans", tags=["Floorplans"])
 
 
+
 @router.post("/upload")
 def upload_floorplan(
     file: UploadFile = File(...),
