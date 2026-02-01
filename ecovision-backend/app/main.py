@@ -48,8 +48,6 @@ app.include_router(floorplan.router)
 
 
 
-Base.metadata.create_all(bind=engine)
-
 @app.get("/")
 def root():
     return {"message": "ECoVision backend is running"}

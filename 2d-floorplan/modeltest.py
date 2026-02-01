@@ -1,3 +1,8 @@
+import torch
+from load_model import model, tokenizer
+
+
+
 #Step 2: Normalizing names in dxf file
 def normalize_furniture_name(raw_name):
     raw_name = raw_name.lower()
