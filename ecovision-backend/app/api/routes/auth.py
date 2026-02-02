@@ -6,6 +6,7 @@ from app.schemas.user import UserCreate, UserResponse, UserUpdate
 from app.services.user_service import create_user, update_user
 from app.services.auth_service import get_current_user, login_user, logout_user
 from app.models.user import User
+from app.models.activity_log import ActivityLog
 
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
@@ -15,6 +16,14 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 def signup(user: UserCreate, db: Session = Depends(get_db)):
     try:
         new_user = create_user(db, user)
+        # Log activity
+        log = ActivityLog(
+            user_id=new_user.id,
+            action="signup",
+            details=f"New user registered: {user.email}"
+        )
+        db.add(log)
+        db.commit()
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     return new_user

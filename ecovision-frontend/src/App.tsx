@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Navbar from "./components/layout/Navbar";
+import Footer from "./components/layout/Footer";
 import { AuthProvider } from "./context/AuthContext";
 import RequireAuth from "./components/RequireAuth";
 import RequireRole from "./components/RequireRole";
@@ -49,6 +50,7 @@ function App() {
         <Route path="/users" element={<RequireRole roles={["admin"]}><AdminUsers /></RequireRole>} />
       </Routes>
    
+      <Footer />
       </BrowserRouter>
     </AuthProvider>
   );

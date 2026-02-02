@@ -1,6 +1,7 @@
 import "../../styles/navbar.css";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import navImage from "../../assets/nav.jpeg";
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -15,7 +16,16 @@ const Navbar = () => {
     <header className="navbar">
       {/* Logo */}
       <div className="nav-logo">
-        Eco<span>Vision</span>
+        <img 
+          src={navImage} 
+          alt="EcoVision Logo" 
+          style={{ 
+            height: "50px", 
+            marginRight: "10px",
+            
+          }} 
+        />
+        <span style={{ display: "flex" }}><span style={{ color: "#0f172a" }}>Eco</span><span>Vision</span></span>
       </div>
 
       {/* Links */}

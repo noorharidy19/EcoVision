@@ -1,6 +1,7 @@
 from sqlalchemy import Column, String, Integer, Enum, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, JSON
 import uuid
+import json
 
 from app.core.database import Base
 from app.models.enum import FileType
@@ -15,4 +16,5 @@ class Floorplan(Base):
     file_type = Column(Enum(FileType), nullable=False)
     project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
     version = Column(Integer, default=1)
+    json_data = Column(JSON, nullable=True)  # Store DXF as JSON
     project = relationship("Project", back_populates="floorplans")

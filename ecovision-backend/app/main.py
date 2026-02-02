@@ -8,6 +8,7 @@ from app.api.routes import users
 from app.api.routes import projects
 from app.api.routes import auth
 from app.api.routes import files_protected
+from app.api.routes import analysis
 from fastapi.staticfiles import StaticFiles
 from fastapi import FastAPI
 from app.core.database import engine
@@ -19,7 +20,8 @@ from app.api.routes import auth
 from fastapi.staticfiles import StaticFiles
 from app.api.routes import admin
 from app.api.routes import floorplan
-from app.api.routes import analysis as analysis_router
+from app.api.routes import logs
+
 
 
 
@@ -30,7 +32,7 @@ app.mount("/files", StaticFiles(directory="uploaded_files"), name="files")
 # Enable CORS for development (adjust origins for production)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000", "http://localhost:8000"],
+    allow_origins=["http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "http://localhost:8000", "http://127.0.0.1:5173", "http://127.0.0.1:5174"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -42,7 +44,9 @@ app.include_router(auth.router)
 app.include_router(files_protected.router)
 app.include_router(admin.router)
 app.include_router(floorplan.router)
-app.include_router(analysis_router.router)
+app.include_router(analysis.router)
+app.include_router(logs.router)
+
 
 
 # If RESET_DB is set to a truthy value, drop and recreate all tables.
