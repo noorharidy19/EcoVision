@@ -14,7 +14,7 @@ from app.models.project import Project
 from app.models.floorplan import Floorplan  # if exists
 from app.models.analysis_result import AnalysisResult
 from app.models.enum import UserRole, FileType
-
+from app.models.analysis_result import AnalysisResult
 
 
 config = context.config
