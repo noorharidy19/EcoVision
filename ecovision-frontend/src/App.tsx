@@ -45,7 +45,7 @@ function App() {
         <Route path="/admin/projects" element={<RequireRole roles={["admin"]}><Projects /></RequireRole>} />
         <Route path="/ai-models" element={<RequireRole roles={["admin"]}><AIModels /></RequireRole>} />
         <Route path="/logs" element={<RequireRole roles={["admin"]}><Logs /></RequireRole>} />
-        <Route path="analysis" element={<Analysis/>} />
+        <Route path="/analysis/:id" element={<Analysis />} />
         <Route path="/users" element={<RequireRole roles={["admin"]}><AdminUsers /></RequireRole>} />
       </Routes>
    

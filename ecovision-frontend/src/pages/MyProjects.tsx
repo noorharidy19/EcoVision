@@ -50,7 +50,7 @@ const MyProjects = () => {
               <button   onClick={() => navigate("/openplan")}>Open</button>
               <button  onClick={() => navigate(`/designworkspace/${proj.id}`)}>Edit</button>
               <button>Delete</button>
-              <button onClick={() => navigate("/analysis")}>Analysis</button>
+              <button onClick={() => navigate(`/analysis/${proj.id}`)}>Analysis</button>
             </div>
           </div>
         ))}

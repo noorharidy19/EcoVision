@@ -22,12 +22,7 @@ const cards: AdminCard[] = [
     action: "View",
     path: "/admin/projects",
   },
-  {
-    title: "AI Models",
-    description: "Control AI models, versions, and configurations.",
-    action: "Edit",
-    path: "/ai-models",
-  },
+ 
   {
     title: "Materials",
     description: "Manage sustainable materials database.",

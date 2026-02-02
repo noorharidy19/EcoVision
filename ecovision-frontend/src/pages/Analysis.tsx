@@ -10,17 +10,54 @@ interface Project {
   created_at: string;
 }
 
-const DesignWorkspace = () => {
+const Analysis = () => {
   const { id } = useParams<{ id: string }>();
   const [project, setProject] = useState<Project | null>(null);
   const [mode, setMode] = useState<"edit" | "sustainability" | "visual" | "thermal">("edit");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (id !== "new") {
-      fetch(`http://127.0.0.1:8000/projects/${id}`)
-        .then(res => res.json())
-        .then(data => setProject(data))
-        .catch(err => console.error(err));
+    if (id && id !== "new" && id !== "undefined") {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("No token found");
+        setError("Not authenticated");
+        setLoading(false);
+        return;
+      }
+
+      console.log("Fetching project:", id);
+      setLoading(true);
+      setError(null);
+
+      fetch(`http://127.0.0.1:8000/projects/${id}`, {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      })
+        .then(async res => {
+          console.log("Response status:", res.status);
+          if (!res.ok) {
+            const text = await res.text();
+            console.error("Error response:", text);
+            throw new Error(`HTTP ${res.status}: ${text}`);
+          }
+          return res.json();
+        })
+        .then(data => {
+          console.log("Project loaded:", data);
+          setProject(data);
+          setLoading(false);
+        })
+        .catch(err => {
+          console.error("Error fetching project:", err);
+          setError(err.message);
+          setLoading(false);
+        });
+    } else {
+      setLoading(false);
+      setError(id === "undefined" ? "Invalid project ID in URL" : null);
     }
   }, [id]);
 
@@ -31,7 +68,14 @@ const DesignWorkspace = () => {
   return (
     <div className="workspace-layout">
       <div className="left-panel">
-        {project ? (
+        {loading ? (
+          <p>Loading project...</p>
+        ) : error ? (
+          <div style={{ color: "red", padding: "20px" }}>
+            <p><strong>Error:</strong> {error}</p>
+            <p>Check browser console for details</p>
+          </div>
+        ) : project ? (
           <div className="project-info-section">
             <div className="project-info-card">
               <h3>{project.name}</h3>
@@ -43,7 +87,7 @@ const DesignWorkspace = () => {
            
           </div>
         ) : (
-          <p>Loading project...</p>
+          <p>No project found</p>
         )}
 
         <div className="design-area">
@@ -64,4 +108,4 @@ const DesignWorkspace = () => {
   );
 };
 
-export default DesignWorkspace;
+export default Analysis;
