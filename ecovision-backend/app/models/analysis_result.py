@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, Float, JSON, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
 
-from app.database.base import Base
+from app.core.database import Base
 
 
 class AnalysisResult(Base):
