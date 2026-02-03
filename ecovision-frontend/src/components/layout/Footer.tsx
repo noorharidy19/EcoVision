@@ -1,7 +1,20 @@
 import "../../styles/footer.css";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import {useAuth} from "../../context/AuthContext";
 
 const Footer = () => {
+
+ const { user } = useAuth();
+ const navigate = useNavigate();
+
+   const handleProtectedClick = (path: string) => {
+    if (!user) {
+      navigate("/login");
+    } else {
+      navigate(path);
+    }
+  };
+
   return (
     <footer className="footer">
       <div className="footer-container">
@@ -15,16 +28,32 @@ const Footer = () => {
         <div className="footer-section">
           <h4>Quick Links</h4>
           <ul className="footer-links">
-            <li><Link to="/">Dashboard</Link></li>
-            <li><Link to="/myprojects">My Projects</Link></li>
-            <li><Link to="/createproject">Create Project</Link></li>
+            <li>
+              <button onClick={() => handleProtectedClick("/")}>
+                Dashboard
+              </button>
+            </li>
+            <li>
+              <button onClick={() => handleProtectedClick("/myprojects")}>
+                My Projects
+              </button>
+            </li>
+            <li>
+              <button onClick={() => handleProtectedClick("/createproject")}>
+                Create Project
+              </button>
+            </li>
           </ul>
         </div>
 
         <div className="footer-section">
           <h4>Support</h4>
           <ul className="footer-links">
-            <li><Link to="/profile">Profile</Link></li>
+             <li>
+              <button onClick={() => handleProtectedClick("/profile")}>
+                Profile
+              </button>
+            </li>
             <li><a href="#">Help Center</a></li>
             <li><a href="#">Contact Us</a></li>
           </ul>

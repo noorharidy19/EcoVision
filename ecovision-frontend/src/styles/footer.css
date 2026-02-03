@@ -90,6 +90,35 @@
   margin: 0;
 }
 
+.footer-links button {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+
+  color: #cbd5e1;
+  font-size: 0.95rem;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  transition: color 0.3s ease;
+}
+
+/* Hover like normal links */
+.footer-links button:hover {
+  color: #0f766e;
+  background: transparent;
+}
+
+/* Remove focus bubble / outline */
+.footer-links button:focus,
+.footer-links button:active {
+  outline: none;
+  background: transparent;
+  box-shadow: none;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .footer-container {
