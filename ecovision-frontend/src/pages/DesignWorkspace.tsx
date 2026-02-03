@@ -30,6 +30,11 @@ const DesignWorkspace = () => {
   const [floorplan, setFloorplan] = useState<Floorplan | null>(null);
   const [aiInput, setAiInput] = useState("");
   const [notification, setNotification] = useState<Notification | null>(null);
+  const [delta, setDelta] = useState<any | null>(null);
+  const [editedFileUrl, setEditedFileUrl] = useState<string | null>(null);
+  const [oldVersionInfo, setOldVersionInfo] = useState<any | null>(null);
+  const [newVersionInfo, setNewVersionInfo] = useState<any | null>(null);
+  const [selectedVersionForAnalysis, setSelectedVersionForAnalysis] = useState<number | null>(null);
 
  useEffect(() => {
   if (id !== "new") {
@@ -149,12 +154,40 @@ const DesignWorkspace = () => {
                 onChange={(e) => setAiInput(e.target.value)}
                 style={{ marginBottom: "15px", width: "100%", padding: "12px", fontSize: "16px", borderRadius: "4px", border: "1px solid #ccc", boxSizing: "border-box" }}
               />
-              <button 
-                className="confirm-btn" 
-                onClick={() => showNotification("AI command confirmed!", "success")}
+              <button
+                className="confirm-btn"
+                onClick={async () => {
+                  const token = localStorage.getItem("token");
+                  if (!floorplan) return showNotification("No floorplan available", "error");
+                  if (!aiInput.trim()) return showNotification("Command cannot be empty", "error");
+                  try {
+                    showNotification("Processing command...", "info");
+                    const res = await fetch(`http://127.0.0.1:8000/floorplans/${floorplan.id}/ai_edit`, {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": token ? `Bearer ${token}` : ""
+                      },
+                      body: JSON.stringify({ command: aiInput })
+                    });
+                    if (!res.ok) throw new Error("AI request failed: " + res.status);
+                    const data = await res.json();
+                    if (!data.success) {
+                      showNotification(data.error || "AI error", "error");
+                      return;
+                    }
+                    setEditedFileUrl(data.edited_file || null);
+                    setOldVersionInfo(null);
+                    setNewVersionInfo(null);
+                    showNotification("Ready to visualize", "success");
+                  } catch (e: any) {
+                    console.error(e);
+                    showNotification(e.message || "Failed to call AI", "error");
+                  }
+                }}
                 style={{ padding: "10px 30px", fontSize: "16px", backgroundColor: "#4CAF50", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}
               >
-                Confirm
+                Enter
               </button>
             </div>
           </div>
@@ -162,6 +195,147 @@ const DesignWorkspace = () => {
           <p>Loading project...</p>
         )}
 
+      </div>
+      <div style={{ maxWidth: "600px", width: "100%", padding: "20px" }}>
+        <div className="project-info-section" style={{ textAlign: "center" }}>
+          <div className="project-info-card" style={{ margin: "0 auto", padding: "20px", border: "1px solid #ddd", borderRadius: "8px" }}>
+            <h4>Changes Preview</h4>
+            {editedFileUrl ? (
+              <div style={{ textAlign: "center" }}>
+                <div style={{ marginBottom: "15px", display: "flex", gap: "10px", justifyContent: "center" }}>
+                  <a 
+                    href={editedFileUrl.startsWith("http") ? editedFileUrl : `http://127.0.0.1:8000${editedFileUrl}`} 
+                    target="_blank" 
+                    rel="noreferrer"
+                    style={{ padding: "10px 20px", fontSize: "14px", backgroundColor: "#2196F3", color: "white", border: "none", borderRadius: "4px", cursor: "pointer", textDecoration: "none" }}
+                  >
+                    Open
+                  </a>
+                </div>
+                <div style={{ marginTop: "15px", display: "flex", gap: "10px", justifyContent: "center" }}>
+                  <button
+                    onClick={async () => {
+                      const token = localStorage.getItem("token");
+                      if (!floorplan) return showNotification("No floorplan available", "error");
+                      try {
+                        showNotification("Saving new version...", "info");
+                        const res = await fetch(`http://127.0.0.1:8000/floorplans/${floorplan.id}/ai_edit`, {
+                          method: "POST",
+                          headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": token ? `Bearer ${token}` : ""
+                          },
+                          body: JSON.stringify({ command: aiInput, confirm: true })
+                        });
+                        if (!res.ok) throw new Error("Save failed: " + res.status);
+                        const data = await res.json();
+                        if (!data.success) {
+                          showNotification(data.error || "Save error", "error");
+                          return;
+                        }
+                        // Refresh floorplan data from server to get updated version
+                        const token = localStorage.getItem("token");
+                        const refreshRes = await fetch(`http://127.0.0.1:8000/floorplans/project/${id}`, {
+                          headers: { "Authorization": token ? `Bearer ${token}` : "" }
+                        });
+                        if (refreshRes.ok) {
+                          const refreshData = await refreshRes.json();
+                          setFloorplan(refreshData);
+                        }
+                        setEditedFileUrl(null);
+                        setAiInput("");
+                        setSelectedVersionForAnalysis(data.new_version);
+                        showNotification(`Saved Version ${data.new_version}`, "success");
+                      } catch (e: any) {
+                        console.error(e);
+                        showNotification(e.message || "Save failed", "error");
+                      }
+                    }}
+                    style={{ padding: "8px 20px", fontSize: "14px", backgroundColor: "#4CAF50", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}
+                  >
+                    Save Version {(floorplan?.version || 1) + 1}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditedFileUrl(null);
+                      setAiInput("");
+                      showNotification("Changes discarded", "info");
+                    }}
+                    style={{ padding: "8px 20px", fontSize: "14px", backgroundColor: "#f44336", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}
+                  >
+                    Undo
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p style={{ color: "#777" }}>No changes yet</p>
+            )}
+            {selectedVersionForAnalysis && (
+              <div style={{ marginTop: "20px", paddingTop: "20px", borderTop: "1px solid #eee" }}>
+                <p style={{ marginBottom: "10px" }}><strong>Continue analysis on:</strong></p>
+                <select
+                  value={selectedVersionForAnalysis}
+                  onChange={(e) => setSelectedVersionForAnalysis(parseInt(e.target.value))}
+                  style={{ padding: "8px", borderRadius: "4px", border: "1px solid #ccc", width: "100%", marginBottom: "10px" }}
+                >
+                  {floorplan && <option value={floorplan.version}>Version {floorplan.version}</option>}
+                  {floorplan && floorplan.version > 1 && <option value={floorplan.version - 1}>Version {floorplan.version - 1}</option>}
+                </select>
+                <button
+                  onClick={() => {
+                    showNotification(`Ready to analyze Version ${selectedVersionForAnalysis}`, "info");
+                    setSelectedVersionForAnalysis(null);
+                  }}
+                  style={{ padding: "8px 20px", fontSize: "14px", backgroundColor: "#2196F3", color: "white", border: "none", borderRadius: "4px", cursor: "pointer", width: "100%" }}
+                >
+                  Analyze Version {selectedVersionForAnalysis}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+        {editedFileUrl && (
+          <div style={{ marginTop: "10px" }}>
+            {(() => {
+              const backendBase = "http://127.0.0.1:8000";
+              const fullUrl = editedFileUrl.startsWith("http") ? editedFileUrl : `${backendBase}${editedFileUrl}`;
+              const fileName = fullUrl.split("/").pop() || "edited.dxf";
+
+              return (
+                <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                  <a href={fullUrl} download={fileName} target="_blank" rel="noreferrer" style={{ color: "#1976d2" }}>
+                    Download edited DXF
+                  </a>
+                  <button
+                    onClick={async () => {
+                      try {
+                        showNotification("Preparing download...", "info");
+                        const resp = await fetch(fullUrl, { headers: { Authorization: localStorage.getItem("token") ? `Bearer ${localStorage.getItem("token")}` : "" } });
+                        if (!resp.ok) throw new Error("Failed to fetch file");
+                        const blob = await resp.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = fileName;
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+                        window.URL.revokeObjectURL(url);
+                        showNotification("Download started", "success");
+                      } catch (err: any) {
+                        console.error(err);
+                        showNotification(err.message || "Download failed", "error");
+                      }
+                    }}
+                    style={{ padding: "6px 12px", borderRadius: "4px", border: "1px solid #1976d2", background: "white", color: "#1976d2", cursor: "pointer" }}
+                  >
+                    Quick Download
+                  </button>
+                </div>
+              );
+            })()}
+          </div>
+        )}
       </div>
     </div>
   );
