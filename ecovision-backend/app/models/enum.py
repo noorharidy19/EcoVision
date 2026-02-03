@@ -8,3 +8,8 @@ class UserRole(str, Enum):
 class FileType(str, Enum):
     DWG = ".dwg"
     DXF = ".dxf"
+    
+class AnalysisType(str, Enum):
+    MATERIAL='MATERIAL'
+    THERMAL='THERMAL'
+    VISUAL='VISUAL'

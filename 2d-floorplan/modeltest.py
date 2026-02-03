@@ -1,7 +1,4 @@
-import torch
-from load_model import model, tokenizer
-
-
+import os
 
 #Step 2: Normalizing names in dxf file
 def normalize_furniture_name(raw_name):
@@ -500,7 +497,7 @@ def generate_cad_delta(command, context_json):
     )
 
 
-    inputs = tokenizer(prompt, return_tensors="pt").to("cuda")
+    inputs = tokenizer(prompt, return_tensors="pt")
     model.eval()
     
     with torch.no_grad():
@@ -717,3 +714,50 @@ def apply_changes_to_dxf(original_dxf, delta_output, output_dxf, original_contex
     print(f"💾 Processed file saved as: {output_dxf}")
 
 
+import requests
+import json
+import ezdxf
+# تأكدي إن كل الدوال اللي بعتيهالي (dxf_to_json_clustered, normalize_furniture_name, etc.) موجودة في نفس الملف
+
+# 1. إعدادات المسارات واللينك
+KAGGLE_API_URL = "https://kennedy-footed-epexegetically.ngrok-free.dev/process"
+INPUT_DXF = "C:\\Users\\Hassan Hatem\\Downloads\\Drawing 1.dxf"  # اسم ملفك
+OUTPUT_DXF = "floorplan_edited.dxf"
+
+def run_ai_edit(user_command):
+    # 2. استخراج الـ Context الحقيقي من ملف الـ DXF
+    print("🔍 Analyzing DXF file...")
+    try:
+        context = dxf_to_json_clustered(INPUT_DXF)
+    except Exception as e:
+        print(f"❌ Error reading DXF: {e}")
+        return
+
+    # 3. إرسال البيانات لكاجل
+    payload = {
+        "command": user_command,
+        "context": context
+    }
+    
+    print(f"🧠 Asking AI to: '{user_command}'...")
+    response = requests.post(KAGGLE_API_URL, json=payload)
+    
+    if response.status_code == 200:
+        res_data = response.json()
+        if res_data.get("success"):
+            delta = res_data["delta"]
+            print(f"✨ AI Decision: {json.dumps(delta, indent=2)}")
+            
+            # 4. تطبيق التعديلات فوراً على الملف
+            print("💾 Applying changes to DXF...")
+            apply_changes_to_dxf(INPUT_DXF, delta, OUTPUT_DXF, context)
+            print(f"🎉 Done! Saved to {OUTPUT_DXF}")
+        else:
+            print(f"⚠️ AI Error: {res_data.get('error')}")
+    else:
+        print(f"🌐 Connection Error: {response.status_code}")
+
+# --- جربي التشغيل الآن ---
+if __name__ == "__main__":
+    command = input(" Move the toilet 100 units left ")
+    run_ai_edit(command)

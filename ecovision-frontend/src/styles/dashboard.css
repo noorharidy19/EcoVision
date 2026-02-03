@@ -1,3 +1,4 @@
+/* 1. الإعدادات العامة */
 * {
   margin: 0;
   padding: 0;
@@ -5,44 +6,43 @@
   font-family: "Inter", sans-serif;
 }
 
-
 html, body, #root {
   height: 100%;
   width: 100%;
   margin: 0;
 }
 
-
 body {
   overflow-x: hidden;
+  background-color: #ffffff;
 }
-
 
 .arch-page {
   min-height: 100vh;
   width: 100%;
-  min-width: 100vw;
   background: #ffffff;
 }
 
-/* HERO */
+/* 2. قسم الهيرو (HERO SECTION) */
 .hero {
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
   padding: 4rem 6vw;
+  /* التدرج اللوني ليتناسب مع اللوجو والمنطقة الخضراء */
   background: linear-gradient(
     120deg,
     #ffffff 60%,
     #d1fae5 60%
   );
+  overflow: hidden;
 }
 
-/* TEXT */
 .hero-text {
   max-width: 520px;
   flex: 1 1 320px;
+  z-index: 2;
 }
 
 .hero-text h1 {
@@ -67,7 +67,7 @@ body {
   margin-bottom: 2rem;
 }
 
-
+/* الأزرار */
 .hero-buttons {
   display: flex;
   gap: 1rem;
@@ -86,6 +86,7 @@ body {
 
 .primary-btn:hover {
   background: #115e59;
+  transform: translateY(-2px);
 }
 
 .secondary-btn {
@@ -101,71 +102,146 @@ body {
 
 .secondary-btn:hover {
   background: #d1fae5;
+  transform: translateY(-2px);
 }
 
-
+/* 3. حاوية اللوجو العائمة */
 .hero-image {
+  flex: 0 0 450px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2;
   position: relative;
-  width: 400px;
-  max-width: 100%;
+}
+
+.main-dashboard-logo {
+  width: 100%;
+  max-width: 320px;
   height: auto;
-  flex: 0 0 400px;
+  background: transparent;
+  /* تأثير ظل خفيف ليعطي عمق للوجو */
+  animation: floatEffect 5s ease-in-out infinite;
 }
 
-.mockup-card {
-  position: absolute;
-  width: 260px;
-  height: 180px;
-  background: white;
-  border-radius: 14px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.12);
-  top: 40px;
-  right: 0;
+@keyframes floatEffect {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
 }
 
-.mockup-card.second {
-  top: 120px;
-  right: 120px;
-  background: #ecfdf5;
-}
-
+/* 4. قسم المميزات (FEATURES) مع تأثير الـ Flip والطفو */
 .features {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 2rem;
-  padding: 4rem 6vw;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2.5rem;
+  padding: 5rem 6vw;
   background: #f8fafc;
+  perspective: 1200px; /* ضروري لتأثير الـ 3D */
 }
 
 .feature-card {
-  background: white;
+  height: 250px;
+  background: transparent;
+  cursor: pointer;
+  /* أنيميشن طفو خفيف للكروت */
+  animation: cardFloat 6s ease-in-out infinite;
+}
+
+/* توقيت مختلف للطفو لكل كارت */
+.feature-card:nth-child(even) { animation-delay: 1s; }
+.feature-card:nth-child(odd) { animation-delay: 0s; }
+
+.card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+}
+
+.feature-card:hover .card-inner {
+  transform: rotateY(180deg);
+}
+
+.card-front, .card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 20px;
   padding: 2rem;
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
 }
 
-.feature-card h4 {
+.card-front {
+  background: white;
+  border: 1px solid #e2e8f0;
+}
+
+.card-front h4 {
   color: #0f766e;
-  margin-bottom: 0.6rem;
-  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
 }
 
-.feature-card p {
-  color: #475569;
+.card-front p {
+  color: #64748b;
   font-size: 0.95rem;
-  line-height: 1.6;
 }
 
+.card-back {
+  background: #0f766e;
+  color: white;
+  transform: rotateY(180deg);
+}
+
+.card-back h4 {
+  margin-bottom: 1rem;
+}
+
+.card-back p {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #f0fdfa;
+}
+
+@keyframes cardFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+/* 5. استجابة الشاشات (RESPONSIVENESS) */
+@media (max-width: 1024px) {
+  .hero-image {
+    flex: 0 0 350px;
+  }
+}
 
 @media (max-width: 900px) {
   .hero {
     flex-direction: column;
+    text-align: center;
     padding: 3rem 1.5rem;
-    background: #ffffff;
+    background: #ffffff; /* تبسيط الخلفية للموبايل */
+  }
+
+  .hero-text {
+    max-width: 100%;
+    margin-bottom: 3rem;
+  }
+
+  .hero-buttons {
+    justify-content: center;
   }
 
   .hero-image {
-    margin-top: 3rem;
+    flex: 0 0 auto;
+    width: 80%;
   }
 
   .hero-text h1 {

@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from datetime import timedelta
 
 from app.models.user import User
+from app.models.activity_log import ActivityLog
 from app.core.security import verify_password, create_access_token, decode_access_token
 from app.core.config import settings
 from app.core.database import get_db
@@ -41,6 +42,15 @@ def login_user(response: Response, email: str, password: str, db: Session):
         raise HTTPException(status_code=400, detail="Incorrect email or password")
     if not verify_password(password, user.password_hash):
         raise HTTPException(status_code=400, detail="Incorrect email or password")
+
+    # Log activity
+    log = ActivityLog(
+        user_id=user.id,
+        action="login",
+        details=f"User logged in: {email}"
+    )
+    db.add(log)
+    db.commit()
 
     # Extract role value (handle Enum or string)
     role_val = user.role.value if hasattr(user.role, "value") else user.role

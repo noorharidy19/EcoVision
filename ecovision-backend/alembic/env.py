@@ -14,6 +14,9 @@ from app.models.project import Project
 from app.models.floorplan import Floorplan  # if exists
 from app.models.analysis_result import AnalysisResult
 from app.models.enum import UserRole, FileType
+from app.models.analysis_result import AnalysisResult 
+from app.models.activity_log import ActivityLog
+from app.models.floorplananalysis import FloorplanAnalysis
 
 
 

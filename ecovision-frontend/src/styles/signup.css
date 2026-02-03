@@ -97,6 +97,41 @@
 }
 
 
+.phone-input-wrapper {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.phone-prefix {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px;
+  background-color: #f2f2f2;
+  border-right: 1px solid #262626;
+  font-size: 14px;
+  color: #262626;
+}
+
+.flag-icon {
+  width: 29px;
+  height: 20px;
+  object-fit: cover;
+  border-radius: 2px;
+}
+
+.phone-input-wrapper input {
+  border: none;
+  padding: 10px;
+  flex: 1;
+  outline: none;
+}
+
+
+
 
 @media (max-width: 480px) {
   .signup-card {

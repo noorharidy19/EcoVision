@@ -94,10 +94,10 @@ const CreateProject: React.FC = () => {
             <div className="upload-box">
               <input
                 type="file"
-                accept=".svg,.dwg,.dxf"
+                accept=".dwg,.dxf"
                 onChange={handleFileChange}
               />
-              <span>{file ? file.name : "SVG, DWG, DXF only"}</span>
+              <span>{file ? file.name : "DWG, DXF only"}</span>
             </div>
           </div>
 

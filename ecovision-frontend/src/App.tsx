@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Navbar from "./components/layout/Navbar";
+import Footer from "./components/layout/Footer";
 import { AuthProvider } from "./context/AuthContext";
 import RequireAuth from "./components/RequireAuth";
 import RequireRole from "./components/RequireRole";
@@ -45,10 +46,11 @@ function App() {
         <Route path="/admin/projects" element={<RequireRole roles={["admin"]}><Projects /></RequireRole>} />
         <Route path="/ai-models" element={<RequireRole roles={["admin"]}><AIModels /></RequireRole>} />
         <Route path="/logs" element={<RequireRole roles={["admin"]}><Logs /></RequireRole>} />
-        <Route path="analysis" element={<Analysis/>} />
+        <Route path="/analysis/:id" element={<Analysis />} />
         <Route path="/users" element={<RequireRole roles={["admin"]}><AdminUsers /></RequireRole>} />
       </Routes>
    
+      <Footer />
       </BrowserRouter>
     </AuthProvider>
   );
