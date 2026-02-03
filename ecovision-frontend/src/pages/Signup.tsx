@@ -10,6 +10,20 @@ const Signup = () => {
 
   const [errors, setErrors] = useState<any>({});
 
+  const handlePhoneChange = (value: string) => {
+  // allow only numbers
+  const digitsOnly = value.replace(/\D/g, "");
+
+  // prevent leading zero
+  if (digitsOnly.startsWith("0")) return;
+
+  // max 10 digits
+  if (digitsOnly.length <= 10) {
+    setPhone(digitsOnly);
+  }
+};
+
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -21,9 +35,13 @@ const Signup = () => {
     }
 
     // Phone
-    if (!phone) {
-      newErrors.phone = "Phone number is required";
-    }
+    // Phone (Egyptian number validation)
+if (!phone) {
+  newErrors.phone = "Phone number is required";
+} else if (!/^[1-9][0-9]{9}$/.test(phone)) {
+  newErrors.phone = "Enter a valid Egyptian phone number (10 digits only)";
+}
+
 
     // Email
     if (!email) {
@@ -63,7 +81,7 @@ const Signup = () => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             full_name: fullName,
-            phone_number: phone,
+            phone_number: "+20" + phone,
             email,
             password: sendPassword,
           }),
@@ -103,13 +121,25 @@ const Signup = () => {
           )}
 
           <label>Phone Number</label>
-          <input
-            type="text"
-            placeholder="Your phone number"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-          />
-          {errors.phone && <span className="input-error">{errors.phone}</span>}
+
+<div className="phone-input-wrapper">
+  <div className="phone-prefix">
+    <img src="/src/assets/egypt.png" alt="Egypt" className="flag-icon" />
+    <span>+20</span>
+  </div>
+
+  <input
+  type="text"
+  placeholder="1001231765"
+  value={phone}
+  onChange={(e) => handlePhoneChange(e.target.value)}
+/>
+
+</div>
+
+{errors.phone && <span className="input-error">{errors.phone}</span>}
+
+
 
           <label>Email</label>
           <input
