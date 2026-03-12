@@ -2,6 +2,29 @@ import { useState, type ChangeEvent, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/createProject.css";
 
+const EGYPT_LOCATIONS = [
+  "Cairo",
+  "Alexandria",
+  "Giza",
+  "Helwan",
+  "6th of October City",
+  "New Cairo",
+  "Zamalek",
+  "Maadi",
+  "Heliopolis",
+  "Nasr City",
+  "Shubra",
+  "Tanta",
+  "Mansoura",
+  "Port Said",
+  "Ismailia",
+  "Suez",
+  "Aswan",
+  "Luxor",
+  "Hurghada",
+  "Marsa Alam"
+];
+
 const CreateProject: React.FC = () => {
   const [projectName, setProjectName] = useState("");
   const [location, setLocation] = useState("");
@@ -81,12 +104,32 @@ const CreateProject: React.FC = () => {
 
           <div className="input-group">
             <label>Location</label>
-            <input
-              type="text"
-              placeholder="Cairo, Egypt"
+            <select
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-            />
+              style={{
+                padding: "14px 16px",
+                borderRadius: "12px",
+                border: "1px solid #e2e8f0",
+                fontSize: "15px",
+                backgroundColor: "white",
+                color: "#000",
+                cursor: "pointer",
+                appearance: "none",
+                backgroundImage: "url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%23000%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3e%3cpolyline points=%276 9 12 15 18 9%3e%3c/polyline%3e%3c/svg%3e')",
+                backgroundRepeat: "no-repeat",
+                backgroundPosition: "right 10px center",
+                backgroundSize: "20px",
+                paddingRight: "40px"
+              }}
+            >
+              <option value="" style={{ color: "#666" }}>Select a location in Egypt</option>
+              {EGYPT_LOCATIONS.map((loc) => (
+                <option key={loc} value={loc} style={{ color: "#000" }}>
+                  {loc}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="input-group">

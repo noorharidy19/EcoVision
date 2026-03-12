@@ -13,3 +13,8 @@ class AnalysisType(str, Enum):
     MATERIAL='MATERIAL'
     THERMAL='THERMAL'
     VISUAL='VISUAL'
+
+class RequestAccess(str, Enum):
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
