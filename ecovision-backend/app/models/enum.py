@@ -16,5 +16,9 @@ class AnalysisType(str, Enum):
 
 class RequestAccess(str, Enum):
     PENDING = "PENDING"
-    APPROVED = "APPROVED"
-    REJECTED = "REJECTED"
+    ACCEPTED = "ACCEPTED"
+    DECLINED = "DECLINED"
+
+class ProjectRole(str, Enum):
+    OWNER = "OWNER"
+    COLLABORATOR = "COLLABORATOR"

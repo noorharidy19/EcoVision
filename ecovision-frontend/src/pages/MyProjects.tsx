@@ -1,12 +1,43 @@
 import "../styles/myprojects.css";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { useAuth } from "../context/AuthContext";
 
 interface Project {
   id: number;
   name: string;
   location: string;
   file_path: string;
+  role: "OWNER";
+  user_id: number;
+}
+
+interface OtherProject {
+  id: number;
+  name: string;
+  location: string;
+  owner: string;
+  user_id: number;
+  access_status?: "PENDING" | "ACCEPTED" | "DECLINED" | null;
+}
+
+interface ApprovedProject {
+  id: number;
+  name: string;
+  location: string;
+  owner: string;
+  user_id: number;
+  role: string;
+}
+
+interface Collaborator {
+  id: number;
+  requester_id: number;
+  requester_name: string;
+  project_id: number;
+  project_name: string;
+  status: "PENDING" | "ACCEPTED" | "DECLINED";
+  created_at: string;
 }
 
 interface Notification {
@@ -16,257 +47,259 @@ interface Notification {
 
 const MyProjects = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+
   const [projects, setProjects] = useState<Project[]>([]);
-  const [deleting, setDeleting] = useState<number | null>(null);
+  const [otherProjects, setOtherProjects] = useState<OtherProject[]>([]);
+  const [approvedProjects, setApprovedProjects] = useState<ApprovedProject[]>([]);
+  const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
+
   const [notification, setNotification] = useState<Notification | null>(null);
-  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
-  const [editingProject, setEditingProject] = useState<number | null>(null);
-  const [editName, setEditName] = useState("");
-  const [editLocation, setEditLocation] = useState("");
-  const [updating, setUpdating] = useState(false);
 
-  useEffect(() => {
-  const token = localStorage.getItem("token");
-  if (!token) return;
-
-  fetch("http://127.0.0.1:8000/projects/", {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  })
-    .then(res => {
-      if (!res.ok) throw new Error("Unauthorized");
-      return res.json();
-    })
-    .then(data => setProjects(data))
-    .catch(err => console.error("Error fetching projects:", err));
-}, []);
-
-  const showNotification = (message: string, type: "success" | "error" | "info" = "info") => {
+  const showNotification = (
+    message: string,
+    type: "success" | "error" | "info" = "info"
+  ) => {
     setNotification({ message, type });
     setTimeout(() => setNotification(null), 3000);
   };
 
-  const deleteProject = async (projectId: number) => {
-    setDeleting(projectId);
-    try {
-      const response = await fetch(`http://127.0.0.1:8000/projects/${projectId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete project");
-      }
-
-      // Remove from local state
-      setProjects(projects.filter(p => p.id !== projectId));
-      setDeleteConfirm(null);
-      showNotification("Project deleted successfully!", "success");
-    } catch (err) {
-      console.error("Error deleting project:", err);
-      showNotification("Failed to delete project", "error");
-    } finally {
-      setDeleting(null);
-    }
-  };
-
-  const updateProject = async (projectId: number) => {
+  useEffect(() => {
     const token = localStorage.getItem("token");
-    if (!token || !editName.trim() || !editLocation.trim()) return;
+    if (!token) return;
 
-    setUpdating(true);
-    try {
-      const response = await fetch(`http://127.0.0.1:8000/projects/${projectId}`, {
-        method: "PUT",
+    // my projects
+    fetch("http://127.0.0.1:8000/projects/", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => setProjects(data))
+      .catch((err) => console.error(err));
+
+    // other projects
+    fetch("http://127.0.0.1:8000/projects/all", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        // Filter out user's own projects
+        const filtered = data.filter((p: OtherProject) => p.user_id !== user?.id);
+        setOtherProjects(filtered);
+      })
+      .catch((err) => console.error(err));
+
+    // Fetch collaborators for my projects
+    if (user?.id) {
+      fetch("http://127.0.0.1:8000/projects/access-requests/my-approvals", {
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-          name: editName,
-          location: editLocation
-        })
-      });
+      })
+        .then((res) => res.json())
+        .then((data) => setCollaborators(data))
+        .catch((err) => console.error("Failed to fetch collaborators:", err));
 
-      if (!response.ok) {
-        throw new Error("Failed to update project");
+      // Fetch approved projects (where user is a collaborator)
+      fetch("http://127.0.0.1:8000/projects/collaborations/my-approved", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+        .then((res) => res.json())
+        .then((data) => setApprovedProjects(data))
+        .catch((err) => console.error("Failed to fetch approved projects:", err));
+    }
+  }, [user?.id]);
+
+  const requestAccess = async (projectId: number) => {
+    const token = localStorage.getItem("token");
+
+    const res = await fetch(
+      `http://127.0.0.1:8000/projects/${projectId}/request-access`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       }
+    );
 
-      const updatedProject = await response.json();
-      setProjects(projects.map(p => p.id === projectId ? { ...p, name: updatedProject.name, location: updatedProject.location } : p));
-      setEditingProject(null);
-      showNotification("Project updated successfully!", "success");
-    } catch (err) {
-      console.error("Error updating project:", err);
-      showNotification("Failed to update project", "error");
-    } finally {
-      setUpdating(false);
+    if (res.ok) {
+      setOtherProjects((prev) =>
+        prev.map((p) =>
+          p.id === projectId ? { ...p, access_status: "PENDING" } : p
+        )
+      );
+
+      showNotification("Access request sent", "success");
+    } else {
+      showNotification("Failed to send request", "error");
     }
   };
-
-  const startEditing = (project: Project) => {
-    setEditingProject(project.id);
-    setEditName(project.name);
-    setEditLocation(project.location);
-  };
-
-  const cancelEditing = () => {
-    setEditingProject(null);
-    setEditName("");
-    setEditLocation("");
-  };
-
-
 
   return (
     <div className="dashboard-container">
       {notification && (
-        <div 
-          style={{
-            position: "fixed",
-            top: "20px",
-            right: "20px",
-            padding: "15px 20px",
-            borderRadius: "8px",
-            color: "white",
-            fontSize: "14px",
-            boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-            zIndex: 1000,
-            backgroundColor: 
-              notification.type === "success" ? "#4CAF50" :
-              notification.type === "error" ? "#f44336" :
-              "#2196F3",
-            animation: "slideIn 0.3s ease-in"
-          }}
-        >
+        <div className={`notification ${notification.type}`}>
           {notification.message}
         </div>
       )}
 
-      {deleteConfirm && (
-        <div 
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0,0,0,0.5)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            zIndex: 999
-          }}
-        >
-          <div 
-            style={{
-              backgroundColor: "white",
-              padding: "30px",
-              borderRadius: "8px",
-              textAlign: "center",
-              boxShadow: "0 4px 6px rgba(0,0,0,0.2)",
-              minWidth: "300px"
-            }}
-          >
-            <h3>Delete Project?</h3>
-            <p style={{ color: "#333" }}>Are you sure you want to delete this project? This action cannot be undone.</p>
-            <div style={{ marginTop: "20px", display: "flex", gap: "10px", justifyContent: "center" }}>
-              <button 
-                onClick={() => deleteProject(deleteConfirm)}
-                disabled={deleting === deleteConfirm}
-                style={{ padding: "10px 20px", backgroundColor: "#f44336", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}
-              >
-                {deleting === deleteConfirm ? "Deleting..." : "Delete"}
-              </button>
-              <button 
-                onClick={() => setDeleteConfirm(null)}
-                style={{ padding: "10px 20px", backgroundColor: "#ccc", border: "none", borderRadius: "4px", cursor: "pointer" }}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <style>{`
-        @keyframes slideIn {
-          from {
-            transform: translateX(400px);
-            opacity: 0;
-          }
-          to {
-            transform: translateX(0);
-            opacity: 1;
-          }
-        }
-      `}</style>
-
       <h1 className="dashboard-title">My Projects</h1>
 
       <div className="projects-grid">
-        {/* New Project Card */}
-        <div className="project-card" onClick={() => {
-          navigate("/createproject");
-          showNotification("Creating new project...", "info");
-        }}>
+        <div
+          className="project-card"
+          onClick={() => navigate("/createproject")}
+        >
           <h3>New Project</h3>
           <p>Upload a 2D plan and start your project</p>
           <button>Create</button>
         </div>
 
-        {/* Existing Projects */}
         {projects.map((proj) => (
           <div key={proj.id} className="project-card">
-            {editingProject === proj.id ? (
-              <>
-                <input 
-                  type="text" 
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  style={{ width: "90%", padding: "8px", marginBottom: "10px", fontSize: "16px" }}
-                />
-                <input 
-                  type="text" 
-                  value={editLocation}
-                  onChange={(e) => setEditLocation(e.target.value)}
-                  style={{ width: "90%", padding: "8px", marginBottom: "10px", fontSize: "14px" }}
-                />
-                <div style={{ marginBottom: "10px" }}>
-                  <button 
-                    onClick={() => updateProject(proj.id)}
-                    disabled={updating}
-                    style={{ marginRight: "10px", opacity: updating ? 0.5 : 1, cursor: updating ? "not-allowed" : "pointer" }}
-                  >
-                    {updating ? "Saving..." : "Save"}
-                  </button>
-                  <button onClick={cancelEditing}>Cancel</button>
-                </div>
-              </>
-            ) : (
-              <>
-                <h3>{proj.name}</h3>
-                <p><strong>Location:</strong> {proj.location}</p>
-                <button onClick={() => startEditing(proj)} style={{ marginBottom: "10px" }}>Edit</button>
-              </>
-            )}
+            <h3>{proj.name}</h3>
+
+            <p>
+              <strong>Location:</strong> {proj.location}
+            </p>
+
+            <p>
+              <strong>Role:</strong> {proj.role}
+            </p>
 
             <div className="card-buttons">
-              <button onClick={() => navigate("/openplan")}>Open</button>
-              <button onClick={() => navigate(`/designworkspace/${proj.id}`)}>Design</button>
-              <button 
-                onClick={() => setDeleteConfirm(proj.id)}
-                style={{ opacity: deleting === proj.id ? 0.5 : 1, cursor: deleting === proj.id ? "not-allowed" : "pointer" }}
-              >
-                Delete
+              <button onClick={() => navigate(`/designworkspace/${proj.id}`)}>
+                Open
               </button>
-              <button onClick={() => navigate(`/analysis/${proj.id}`)}>Analysis</button>
+
+              <button onClick={() => navigate(`/analysis/${proj.id}`)}>
+                Analysis
+              </button>
+              <button onClick={() => navigate(`/project/${proj.id}/requests`)}>
+                Requests
+              </button>
             </div>
           </div>
         ))}
+      </div>
+
+      {collaborators.length > 0 && (
+        <>
+          <h1 className="dashboard-title" style={{ marginTop: "40px" }}>
+            Collaborators & Access Requests
+          </h1>
+
+          <div className="collaborators-section">
+            <table className="collaborators-table">
+              <thead>
+                <tr>
+                  <th>Project</th>
+                  <th>Collaborator</th>
+                  <th>Status</th>
+                  <th>Requested Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {collaborators.map((collab) => (
+                  <tr key={collab.id} className={`status-${collab.status.toLowerCase()}`}>
+                    <td className="project-name">{collab.project_name}</td>
+                    <td className="collaborator-name">{collab.requester_name}</td>
+                    <td>
+                      <span className={`status-badge ${collab.status.toLowerCase()}`}>
+                        {collab.status}
+                      </span>
+                    </td>
+                    <td className="date">
+                      {new Date(collab.created_at).toLocaleDateString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
+      {approvedProjects.length > 0 && (
+        <>
+          <h1 className="dashboard-title" style={{ marginTop: "40px" }}>
+            Approved Collaborations
+          </h1>
+
+          <div className="projects-grid">
+            {approvedProjects.map((proj) => (
+              <div key={proj.id} className="project-card">
+                <h3>{proj.name}</h3>
+
+                <p>
+                  <strong>Location:</strong> {proj.location}
+                  <br />
+                  <strong>Owner:</strong> {proj.owner}
+                  <br />
+                  <strong>Role:</strong> {proj.role}
+                </p>
+
+                <div className="card-buttons">
+                  <button onClick={() => navigate(`/designworkspace/${proj.id}`)}>
+                    Open
+                  </button>
+
+                  <button onClick={() => navigate(`/analysis/${proj.id}`)}>
+                    Analysis
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      <h1 className="dashboard-title" style={{ marginTop: "40px" }}>
+        Other Projects
+      </h1>
+
+      <div className="projects-grid">
+        {otherProjects.filter(
+          (proj) => !approvedProjects.some((approved) => approved.id === proj.id)
+        ).length === 0 ? (
+          <div className="no-projects">
+            <p>No other projects available</p>
+          </div>
+        ) : (
+          otherProjects
+            .filter(
+              (proj) => !approvedProjects.some((approved) => approved.id === proj.id)
+            )
+            .map((proj) => (
+            <div key={proj.id} className="project-card">
+              <h3>{proj.name}</h3>
+
+              <p>
+                <strong>Location:</strong> {proj.location}
+                <br />
+                <strong>Owner:</strong> {proj.owner}
+              </p>
+
+              {proj.access_status === "PENDING" ? (
+                <button disabled>Pending</button>
+              ) : proj.access_status === "ACCEPTED" ? (
+                <button onClick={() => navigate(`/designworkspace/${proj.id}`)}>
+                  Open
+                </button>
+              ) : (
+                <button onClick={() => requestAccess(proj.id)}>
+                  Request Access
+                </button>
+              )}
+            </div>
+          ))
+        )}
       </div>
     </div>
   );

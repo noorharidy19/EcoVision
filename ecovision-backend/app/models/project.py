@@ -3,6 +3,7 @@ from sqlalchemy.sql import func
 from app.core.database import Base
 from sqlalchemy.orm import relationship
 
+
 class Project(Base):
     __tablename__ = "projects"
 
@@ -15,3 +16,13 @@ class Project(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     user = relationship("User", back_populates="projects")
     floorplans = relationship("Floorplan", back_populates="project")
+    access_requests = relationship(
+    "ProjectAccess",
+    back_populates="project",
+    cascade="all, delete"
+)
+    collaborators = relationship(
+    "ProjectCollaborator",
+    back_populates="project",
+    cascade="all, delete"
+)

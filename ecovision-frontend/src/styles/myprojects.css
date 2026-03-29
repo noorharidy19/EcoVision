@@ -69,6 +69,105 @@
   width: 45%;
 }
 
+/* ==================== COLLABORATORS TABLE ==================== */
+.collaborators-section {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+  max-width: 1000px;
+  margin: 0 auto 2rem;
+  overflow-x: auto;
+}
+
+.collaborators-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.collaborators-table thead {
+  background-color: #0f766e;
+  color: white;
+  font-weight: 600;
+}
+
+.collaborators-table th {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 2px solid #0f766e;
+}
+
+.collaborators-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.collaborators-table tbody tr {
+  transition: background-color 0.2s;
+}
+
+.collaborators-table tbody tr:hover {
+  background-color: #f9f9f9;
+}
+
+.collaborators-table tbody tr.status-pending {
+  border-left: 4px solid #f59e0b;
+}
+
+.collaborators-table tbody tr.status-approved {
+  border-left: 4px solid #10b981;
+}
+
+.collaborators-table tbody tr.status-rejected {
+  border-left: 4px solid #ef4444;
+}
+
+.collaborators-table .project-name {
+  font-weight: 600;
+  color: #0f766e;
+}
+
+.collaborators-table .collaborator-name {
+  color: #333;
+}
+
+.collaborators-table .date {
+  color: #999;
+  font-size: 0.9rem;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.4rem 0.8rem;
+  border-radius: 16px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-badge.pending {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.status-badge.approved {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge.rejected {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.no-projects {
+  text-align: center;
+  padding: 2rem;
+  color: #999;
+  font-size: 1rem;
+}
 
 @media (max-width: 768px) {
   .projects-grid {
@@ -79,4 +178,25 @@
   .project-card {
     width: 80%;
   }
+
+  .collaborators-section {
+    overflow-x: auto;
+    margin: 0 auto 2rem;
+    padding: 1rem;
+  }
+
+  .collaborators-table {
+    font-size: 0.85rem;
+  }
+
+  .collaborators-table th,
+  .collaborators-table td {
+    padding: 0.75rem 0.5rem;
+  }
+
+  .status-badge {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.75rem;
+  }
 }
+

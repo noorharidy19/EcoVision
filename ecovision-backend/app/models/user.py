@@ -4,6 +4,7 @@ from sqlalchemy.orm import relationship
 from app.models.enum import UserRole
 
 
+
 class User(Base):
     __tablename__ = "users"
 
@@ -15,6 +16,14 @@ class User(Base):
     phone_number = Column(String, nullable=True)
     projects = relationship("Project", back_populates="user")
     activity_logs = relationship("ActivityLog", back_populates="user")
+    collaborations = relationship(
+        "ProjectCollaborator",
+        back_populates="user"
+    )
+    access_requests = relationship(
+    "ProjectAccess",
+    back_populates="requester"
+)
     
 
 

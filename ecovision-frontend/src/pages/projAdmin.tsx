@@ -54,6 +54,7 @@ export default function Projects() {
                 <th>File</th>
                 <th>Created At</th>
                 <th>User ID</th>
+                
               </tr>
             </thead>
             <tbody>
@@ -65,6 +66,7 @@ export default function Projects() {
                   <td>{project.file_path}</td>
                   <td>{new Date(project.created_at).toLocaleString()}</td>
                   <td>{project.user_id}</td>
+
                 </tr>
               ))}
             </tbody>

@@ -70,6 +70,8 @@ def get_floorplan_by_project(
     current_user: User = Depends(get_current_user)
 ):
     """Get floorplan for a project"""
+    from app.models.project_collab import ProjectCollaborator
+    
     # Check if project exists and user has access
     project = db.query(Project).filter(Project.id == project_id).first()
     if not project:
@@ -77,7 +79,19 @@ def get_floorplan_by_project(
     
     # Check authorization
     role_val = current_user.role.value if hasattr(current_user.role, "value") else current_user.role
-    if str(role_val).upper() != "ADMIN" and project.user_id != current_user.id:
+    is_admin = str(role_val).upper() == "ADMIN"
+    is_owner = project.user_id == current_user.id
+    is_collaborator = False
+    
+    if not is_admin and not is_owner:
+        # Check if user is a collaborator
+        collaborator = db.query(ProjectCollaborator).filter(
+            ProjectCollaborator.project_id == project_id,
+            ProjectCollaborator.user_id == current_user.id
+        ).first()
+        is_collaborator = collaborator is not None
+    
+    if not is_admin and not is_owner and not is_collaborator:
         raise HTTPException(status_code=403, detail="Not authorized")
     
     # Get floorplan

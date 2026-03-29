@@ -53,16 +53,29 @@ def get_projects(db: Session, current_user: User) -> list[Project]:
 
 
 def get_project_by_id(project_id: int, db: Session, current_user: User) -> Project:
-    """Get a project by id. Admin can access any project, others can only access their own."""
+    """Get a project by id. Admin can access any project, owner/collaborators can access their projects."""
+    from app.models.project_collab import ProjectCollaborator
+    
     role_val = current_user.role.value if hasattr(current_user.role, "value") else current_user.role
     
     if str(role_val).upper() == UserRole.ADMIN.value:
         project = db.query(Project).filter(Project.id == project_id).first()
     else:
+        # Check if user is owner
         project = db.query(Project).filter(
             Project.id == project_id,
             Project.user_id == current_user.id
         ).first()
+        
+        # If not owner, check if user is a collaborator
+        if not project:
+            collaborator = db.query(ProjectCollaborator).filter(
+                ProjectCollaborator.project_id == project_id,
+                ProjectCollaborator.user_id == current_user.id
+            ).first()
+            
+            if collaborator:
+                project = db.query(Project).filter(Project.id == project_id).first()
 
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")

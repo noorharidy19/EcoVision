@@ -76,7 +76,20 @@ async def analyze_project_comfort(
     
     # Check if user owns project (unless admin)
     role_val = current_user.role.value if hasattr(current_user.role, "value") else current_user.role
-    if str(role_val).upper() != "ADMIN" and project.user_id != current_user.id:
+    is_admin = str(role_val).upper() == "ADMIN"
+    is_owner = project.user_id == current_user.id
+    is_collaborator = False
+    
+    if not is_admin and not is_owner:
+        from app.models.project_collab import ProjectCollaborator
+        # Check if user is a collaborator
+        collaborator = db.query(ProjectCollaborator).filter(
+            ProjectCollaborator.project_id == project_id,
+            ProjectCollaborator.user_id == current_user.id
+        ).first()
+        is_collaborator = collaborator is not None
+    
+    if not is_admin and not is_owner and not is_collaborator:
         logger.warning(f"User {current_user.id} not authorized for project {project_id}")
         raise HTTPException(status_code=403, detail="Not authorized to access this project")
     
