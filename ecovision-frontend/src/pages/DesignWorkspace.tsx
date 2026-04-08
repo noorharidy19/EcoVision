@@ -32,6 +32,8 @@ const DesignWorkspace = () => {
   const [notification, setNotification] = useState<Notification | null>(null);
   const [delta, setDelta] = useState<any | null>(null);
   const [editedFileUrl, setEditedFileUrl] = useState<string | null>(null);
+  const [exportFormat, setExportFormat] = useState<string>("dxf");
+  const [exporting, setExporting] = useState(false);
   const [oldVersionInfo, setOldVersionInfo] = useState<any | null>(null);
   const [newVersionInfo, setNewVersionInfo] = useState<any | null>(null);
   const [saveConfirmation, setSaveConfirmation] = useState<boolean>(false);
@@ -90,6 +92,47 @@ const DesignWorkspace = () => {
     return <p>Create a new project here...</p>;
   }
 
+  const exportFile = async (format: string) => {
+    if (!floorplan) {
+      showNotification("No floorplan available to export", "error");
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      showNotification("Not authenticated", "error");
+      return;
+    }
+
+    setExporting(true);
+    try {
+      const res = await fetch(`http://127.0.0.1:8000/floorplans/${floorplan.id}/export?format=${format}`, {
+        method: "GET",
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || `HTTP ${res.status}`);
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const ext = format === "png" ? "png" : format;
+      a.href = url;
+      a.download = `${project?.name || "floorplan"}.${ext}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showNotification("Export started", "success");
+    } catch (e: any) {
+      console.error(e);
+      showNotification(e.message || "Export failed", "error");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="workspace-layout" style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}>
       {notification && (
@@ -146,49 +189,23 @@ const DesignWorkspace = () => {
             </div>
 
             <div style={{ textAlign: "center", marginTop: "30px" }}>
-              <input 
-                type="text" 
-                placeholder="Enter AI command" 
-                className="edit-input-btn" 
-                value={aiInput}
-                onChange={(e) => setAiInput(e.target.value)}
-                style={{ marginBottom: "15px", width: "100%", padding: "12px", fontSize: "16px", borderRadius: "4px", border: "1px solid #ccc", boxSizing: "border-box" }}
-              />
-              <button
-                className="confirm-btn"
-                onClick={async () => {
-                  const token = localStorage.getItem("token");
-                  if (!floorplan) return showNotification("No floorplan available", "error");
-                  if (!aiInput.trim()) return showNotification("Command cannot be empty", "error");
-                  try {
-                    showNotification("Processing command...", "info");
-                    const res = await fetch(`http://127.0.0.1:8000/floorplans/${floorplan.id}/ai_edit`, {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": token ? `Bearer ${token}` : ""
-                      },
-                      body: JSON.stringify({ command: aiInput })
-                    });
-                    if (!res.ok) throw new Error("AI request failed: " + res.status);
-                    const data = await res.json();
-                    if (!data.success) {
-                      showNotification(data.error || "AI error", "error");
-                      return;
-                    }
-                    setEditedFileUrl(data.edited_file || null);
-                    setOldVersionInfo(null);
-                    setNewVersionInfo(null);
-                    showNotification("Ready to visualize", "success");
-                  } catch (e: any) {
-                    console.error(e);
-                    showNotification(e.message || "Failed to call AI", "error");
-                  }
-                }}
-                style={{ padding: "10px 30px", fontSize: "16px", backgroundColor: "#4CAF50", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}
-              >
-                Enter
-              </button>
+              <div style={{ display: "flex", gap: "8px", alignItems: "center", justifyContent: "center" }}>
+                <label style={{ fontWeight: 600 }}>Export as:</label>
+                <select value={exportFormat} onChange={e => setExportFormat(e.target.value)} style={{ padding: "8px", borderRadius: "4px" }}>
+                  <option value="dxf">DXF</option>
+                  <option value="dwg">DWG</option>
+                  <option value="pdf">PDF</option>
+                  <option value="png">Image (PNG)</option>
+                </select>
+                <button
+                  className="confirm-btn"
+                  onClick={() => exportFile(exportFormat)}
+                  disabled={!floorplan || exporting}
+                  style={{ padding: "10px 20px", fontSize: "16px", backgroundColor: "#2196F3", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}
+                >
+                  {exporting ? "Exporting..." : "Export"}
+                </button>
+              </div>
             </div>
           </div>
         ) : (
@@ -224,7 +241,6 @@ const DesignWorkspace = () => {
                   <button
                     onClick={() => {
                       setEditedFileUrl(null);
-                      setAiInput("");
                       showNotification("Changes discarded", "info");
                     }}
                     style={{ padding: "8px 20px", fontSize: "14px", backgroundColor: "#f44336", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}
@@ -276,13 +292,13 @@ const DesignWorkspace = () => {
                   if (!floorplan) return showNotification("No floorplan available", "error");
                   try {
                     showNotification("Saving new version...", "info");
-                    const res = await fetch(`http://127.0.0.1:8000/floorplans/${floorplan.id}/ai_edit`, {
+                    const res = await fetch(`http://127.0.0.1:8000/floorplans/${floorplan.id}/save_version`, {
                       method: "POST",
                       headers: {
                         "Content-Type": "application/json",
                         "Authorization": token ? `Bearer ${token}` : ""
                       },
-                      body: JSON.stringify({ command: aiInput, confirm: true })
+                      body: JSON.stringify({ edited_file: editedFileUrl })
                     });
                     if (!res.ok) throw new Error("Save failed: " + res.status);
                     const data = await res.json();
@@ -300,9 +316,8 @@ const DesignWorkspace = () => {
                       setFloorplan(refreshData);
                     }
                     setEditedFileUrl(null);
-                    setAiInput("");
                     setSaveConfirmation(false);
-                    showNotification(`Saved Version ${data.new_version}`, "success");
+                    showNotification(`Saved Version ${data.new_version || "(updated)"}`, "success");
                   } catch (e: any) {
                     console.error(e);
                     showNotification(e.message || "Save failed", "error");

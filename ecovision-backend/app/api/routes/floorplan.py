@@ -1,4 +1,17 @@
 from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException
+from fastapi.responses import StreamingResponse, FileResponse
+import io
+
+# Make matplotlib optional so the server can run without image/PDF export support
+try:
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    from ezdxf.addons.drawing import RenderContext, Frontend
+    from ezdxf.addons.drawing.matplotlib import MatplotlibBackend
+    HAS_MATPLOTLIB = True
+except Exception:
+    HAS_MATPLOTLIB = False
 from sqlalchemy.orm import Session
 from app.services.file_storage import save_uploaded_file
 from app.services.analysis.floorplan_processor import dxf_to_json_clustered
@@ -17,6 +30,84 @@ from ezdxf import bbox
 import ezdxf
 
 router = APIRouter(prefix="/floorplans", tags=["Floorplans"])
+
+
+@router.get("/{floorplan_id}/export")
+def export_floorplan(
+    floorplan_id: int,
+    format: str = "dxf",
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Export floorplan in requested format. Supported formats: dxf, dwg, png, pdf."""
+    floorplan = db.query(Floorplan).filter(Floorplan.id == floorplan_id).first()
+    if not floorplan:
+        raise HTTPException(status_code=404, detail="Floorplan not found")
+
+    # Authorization: require project ownership or admin or collaborator
+    project = db.query(Project).filter(Project.id == floorplan.project_id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    role_val = current_user.role.value if hasattr(current_user.role, "value") else current_user.role
+    is_admin = str(role_val).upper() == "ADMIN"
+    is_owner = project.user_id == current_user.id
+    if not is_admin and not is_owner:
+        # try collaborator table if exists
+        try:
+            from app.models.project_collab import ProjectCollaborator
+            collaborator = db.query(ProjectCollaborator).filter(
+                ProjectCollaborator.project_id == project.id,
+                ProjectCollaborator.user_id == current_user.id
+            ).first()
+            if not collaborator:
+                raise HTTPException(status_code=403, detail="Not authorized")
+        except Exception:
+            raise HTTPException(status_code=403, detail="Not authorized")
+
+    file_path = floorplan.file_path
+    if not file_path or not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Source file not found on server")
+
+    fmt = (format or "dxf").lower()
+    if fmt in ("dxf", "dwg"):
+        # serve original file
+        filename = os.path.basename(file_path)
+        return FileResponse(path=file_path, filename=filename, media_type="application/octet-stream")
+
+    if fmt in ("png", "pdf"):
+        if not HAS_MATPLOTLIB:
+            raise HTTPException(status_code=501, detail="Server missing 'matplotlib' dependency required to render PNG/PDF exports. Install it in the backend environment (pip install matplotlib).")
+
+        try:
+            doc = ezdxf.readfile(file_path)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to read DXF: {e}")
+
+        try:
+            msp = doc.modelspace()
+            fig = plt.figure(figsize=(12, 12))
+            ax = fig.add_axes([0, 0, 1, 1])
+            ctx = RenderContext(doc)
+            out = MatplotlibBackend(ax)
+            Frontend(ctx, out).draw_layout(msp, finalize=True)
+
+            buf = io.BytesIO()
+            if fmt == "png":
+                plt.savefig(buf, format="png", dpi=150, bbox_inches='tight')
+                media_type = "image/png"
+                ext = "png"
+            else:
+                plt.savefig(buf, format="pdf", bbox_inches='tight')
+                media_type = "application/pdf"
+                ext = "pdf"
+            plt.close(fig)
+            buf.seek(0)
+            return StreamingResponse(buf, media_type=media_type, headers={"Content-Disposition": f"attachment; filename=\"{project.name or 'floorplan'}.{ext}\""})
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to render export: {e}")
+
+    raise HTTPException(status_code=400, detail="Unsupported export format")
 
 
 
