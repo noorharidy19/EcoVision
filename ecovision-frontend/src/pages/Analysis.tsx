@@ -19,13 +19,6 @@ interface Floorplan {
   version?: number;
 }
 
-interface AnalysisResults {
-  [orientation: string]: {
-    thermal?: number;
-    visual?: number;
-  };
-}
-
 const Analysis = () => {
   const { id } = useParams<{ id: string }>();
   const [project, setProject] = useState<Project | null>(null);
@@ -36,8 +29,6 @@ const Analysis = () => {
   const [exporting, setExporting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [analyzing, setAnalyzing] = useState(false);
-  const [analysisResults, setAnalysisResults] = useState<AnalysisResults | null>(null);
 
   useEffect(() => {
     if (id && id !== "new" && id !== "undefined") {
@@ -108,45 +99,8 @@ const Analysis = () => {
     return <p>Create a new project here...</p>;
   }
 
-  const runAnalysis = async (type: "thermal" | "visual") => {
-    if (!id) return;
-    
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setError("Not authenticated");
-      return;
-    }
-
-    setAnalyzing(true);
-    setError(null);
-
-    try {
-      const response = await fetch(
-        `http://127.0.0.1:8000/analysis/project/${id}/comfort?analysis_type=${type}`,
-        {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${token}`
-          }
-        }
-      );
-
-      if (!response.ok) {
-        const text = await response.text();
-        throw new Error(`HTTP ${response.status}: ${text}`);
-      }
-
-      const data = await response.json();
-      console.log("Analysis results:", data);
-      setAnalysisResults(data.results);
-      setMode(type);
-    } catch (err) {
-      console.error("Error running analysis:", err);
-      setError(err instanceof Error ? err.message : "Analysis failed");
-    } finally {
-      setAnalyzing(false);
-    }
-  };
+  // TODO: Thermal & Visual models disabled - building new model
+  // const runAnalysis = async (type: "thermal" | "visual") => { ... }
 
   const exportFile = async (format: string) => {
     if (!floorplan) {
@@ -231,27 +185,14 @@ const Analysis = () => {
 
         <div className="design-area">
           <div className="workspace-toolbar">
-            <button 
-              onClick={() => runAnalysis("thermal")}
-              disabled={analyzing || !floorplan}
-              style={{ opacity: analyzing || !floorplan ? 0.5 : 1, cursor: analyzing || !floorplan ? "not-allowed" : "pointer" }}
-            >
-              {analyzing ? "Analyzing..." : "Thermal Comfort"}
-            </button>
-            <button 
-              onClick={() => runAnalysis("visual")}
-              disabled={analyzing || !floorplan}
-              style={{ opacity: analyzing || !floorplan ? 0.5 : 1, cursor: analyzing || !floorplan ? "not-allowed" : "pointer" }}
-            >
-              {analyzing ? "Analyzing..." : "Visual Comfort"}
-            </button>
+            {/* Thermal & Visual analysis disabled - building new model */}
             <button onClick={() => setMode("sustainability")}>Sustainability</button>
             <button 
               onClick={() => setMode("recommendation")}
               disabled={!floorplan}
               style={{ marginLeft: "8px", opacity: !floorplan ? 0.5 : 1, cursor: !floorplan ? "not-allowed" : "pointer" }}
             >
-              Edit Recommendations
+              Recommendations
             </button>
           </div>
 
@@ -265,41 +206,10 @@ const Analysis = () => {
               </div>
             )}
 
-            {mode === "thermal" && analysisResults && (
+            {mode === "sustainability" && (
               <div style={{ padding: "20px" }}>
-                <h4>Thermal Comfort Analysis Results</h4>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px", marginTop: "15px" }}>
-                  {Object.entries(analysisResults).map(([orientation, scores]: [string, any]) => (
-                    <div key={orientation} style={{ 
-                      border: "1px solid #ddd", 
-                      padding: "15px", 
-                      borderRadius: "8px",
-                      backgroundColor: "#f9f9f9"
-                    }}>
-                      <h5>{orientation}</h5>
-                      <p><strong>Thermal Score:</strong> {(scores.thermal).toFixed(2)}%</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {mode === "visual" && analysisResults && (
-              <div style={{ padding: "20px" }}>
-                <h4>Visual Comfort Analysis Results</h4>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px", marginTop: "15px" }}>
-                  {Object.entries(analysisResults).map(([orientation, scores]: [string, any]) => (
-                    <div key={orientation} style={{ 
-                      border: "1px solid #ddd", 
-                      padding: "15px", 
-                      borderRadius: "8px",
-                      backgroundColor: "#f9f9f9"
-                    }}>
-                      <h5>{orientation}</h5>
-                      <p><strong>Visual Score:</strong> {(scores.visual).toFixed(2)}%</p>
-                    </div>
-                  ))}
-                </div>
+                <h4>Sustainability Analysis</h4>
+                <p>Sustainability analysis coming soon...</p>
               </div>
             )}
 

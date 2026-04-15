@@ -1,6 +1,6 @@
 from app.core.parsers.base import FileParser
 from app.core.parsers.dxf_normalizer import DXFNormalizer
-from app.services.analysis.floorplan_processor import dxf_to_json_clustered_from_normalized
+from app.services.analysis.floorplan_processor import extract_features
 import logging
 from typing import Dict, Any
 

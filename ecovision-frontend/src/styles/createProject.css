@@ -106,7 +106,45 @@
 .create-btn:hover {
   background: #16a34a;
 }
+/* SELECT STYLE */
+.input-group select {
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  font-size: 15px;
+  background: white;
+}
 
+.input-group select:focus {
+  outline: none;
+  border-color: #34d399;
+}
+
+/* ADD ROOM BUTTON */
+.add-room-btn {
+  margin-top: 8px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px dashed #34d399;
+  background: transparent;
+  color: #059669;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.add-room-btn:hover {
+  background: #ecfdf5;
+}
+
+/* FILE INPUT CLEAN UX */
+.upload-box input {
+  display: none;
+}
+
+/* SMALL IMPROVEMENTS */
+.project-panel select {
+  cursor: pointer;
+}
 /* RESPONSIVE */
 @media (max-width: 900px) {
   .create-layout {

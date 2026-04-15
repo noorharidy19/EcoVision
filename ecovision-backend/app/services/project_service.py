@@ -11,24 +11,36 @@ from app.models.floorplan import Floorplan
 from app.models.activity_log import ActivityLog
 from app.models.project_access import ProjectAccess
 from app.models.project_collab import ProjectCollaborator
-from app.models.enum import RequestAccess
+from app.models.enum import RequestAccess, FileType
 
 UPLOAD_DIR = "uploaded_files"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
+def create_project_service(
+    name: str,
+    location: str,
+    north_arrow_direction: str,
+    rooms_json: str,
+    file: UploadFile,
+    db: Session,
+    current_user: User
+) -> Project:
 
-def create_project(name: str, location: str, file: UploadFile, db: Session, current_user: User) -> Project:
-    """Create a new project with uploaded file."""
+    # 1️⃣ Save file
     file_path = save_uploaded_file(file)
 
-    # determine file type enum from extension
+    # 2️⃣ Detect file type
     ext = os.path.splitext(file.filename)[1].lower()
+
     try:
-        from app.models.enum import FileType
         file_type = FileType(ext)
     except Exception:
-        raise HTTPException(status_code=400, detail=f"Unsupported file type: {ext}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file type: {ext}"
+        )
 
+    # 3️⃣ Create project FIRST (safe approach)
     new_project = Project(
         name=name,
         location=location,
@@ -40,11 +52,24 @@ def create_project(name: str, location: str, file: UploadFile, db: Session, curr
     db.commit()
     db.refresh(new_project)
 
-    # create floorplan record and parse file
+    # 4️⃣ Parse rooms + floorplan (non-blocking risk)
     try:
-        upload_and_parse_floorplan(db, new_project.id, file_path, file_type)
-    except Exception:
-        raise HTTPException(status_code=500, detail="Failed to save or parse floorplan")
+        upload_and_parse_floorplan(
+            db=db,
+            project_id=new_project.id,
+            file_path=file_path,
+            file_type=file_type,
+            city=location,  # city = location ✔
+            north_arrow_direction=north_arrow_direction,
+            rooms_json=rooms_json
+        )
+
+    except Exception as e:
+        # ❗ don't rollback project if parsing fails
+        print(f"⚠ Parsing failed: {str(e)}")
+
+        new_project.parsing_status = "failed"
+        db.commit()
 
     return new_project
 

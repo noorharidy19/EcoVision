@@ -1,0 +1,106 @@
+{
+  "city_climate": {
+    "Cairo": "hot_dry", "Aswan": "hot_dry",
+    "Alexandria": "hot_humid",
+    "Port Said": "hot_humid", "Dahab": "hot_dry",
+     "Hurghada": "hot_dry"
+  },
+
+  "room_categories": {
+    "circulation": ["lobby", "corridor", "hall", "hallway", "entrance", "foyer", "circulation"],
+    "high_use":    ["bedroom", "living", "office", "study", "dining", "kitchen", "master", "gym", "maid"],
+    "service":     ["bathroom", "toilet", "kitchen", "wc"],
+    "keywords": [
+      "BEDROOM", "MASTER BEDROOM", "MASTER",
+      "LIVING", "LOBBY",
+      "BATHROOM", "BATH", "TOILET", "WC", "W.C",
+      "TERRACE", "KITCHEN", "DINING",
+      "CORRIDOR", "HALL", "HALLWAY",
+      "STUDY", "OFFICE", "STAIR",
+      "STORAGE", "STORE",
+      "LAUNDRY",
+      "MAID", "MAID ROOM", "MAIDS ROOM", "SERVANT",
+      "GYM", "SAUNA"
+    ]
+  },
+
+  "dxf": {
+    "skip_layer_keywords": ["ORIGINAL", "ROOF", "DIM", "DEFPOINTS", "SYMB", "TEXT", "AREA", "ELEV", "STAIR", "FURN", "FIXT", "DASH"],
+    "multi_window_area_m2": 20.0,
+    "dim_search_radius_m": 1.5,
+    "dim_width_min_mm": 200,
+    "dim_width_max_mm": 5000,
+    "default_window_height_mm": 1300
+  },
+
+  "thresholds": {
+    "corridor_ratio_max_pct": 15,
+    "large_room_area_m2": 45
+  },
+
+  "solar_ratings": {
+    "hot_dry": {
+      "N": "good", "NE": "good", "E": "acceptable",
+      "SE": "acceptable", "S": "poor", "SW": "poor",
+      "W": "poor", "NW": "acceptable"
+    },
+    "hot_humid": {
+      "N": "good", "NE": "good", "E": "good",
+      "SE": "acceptable", "S": "acceptable", "SW": "poor",
+      "W": "poor", "NW": "acceptable"
+    },
+    "moderate": {
+      "N": "acceptable", "NE": "acceptable", "E": "good",
+      "SE": "good", "S": "good", "SW": "good",
+      "W": "acceptable", "NW": "acceptable"
+    }
+  },
+
+  "window_ratings": {
+    "bathroom": {
+      "good":       ["N", "NE", "NW"],
+      "acceptable": ["E", "W", "S", "SE", "SW"]
+    },
+    "bedroom": {
+      "good":       ["N", "NW"],
+      "acceptable": ["NE", "E"]
+    },
+    "living": {
+      "good":       ["N", "NW"],
+      "acceptable": ["NE"]
+    },
+    "kitchen": {
+      "acceptable": ["E", "W", "S", "SE"],
+      "good":       ["N", "NW", "NE"]
+    }
+  },
+
+  "window_direction_rules": {
+    "bedroom": {
+      "ideal":  "north or north-east",
+      "reason": "morning light and to avoid afternoon heat"
+    },
+    "master": {
+      "ideal":  "north or north-east",
+      "reason": "morning light and to avoid afternoon heat"
+    },
+    "living": {
+      "ideal":  "north or north-west",
+      "reason": "diffused light, cool bahary breeze, and minimal direct sun"
+    },
+    "reception": {
+      "ideal":  "north or north-west",
+      "reason": "diffused light, cool bahary breeze, and minimal direct sun"
+    },
+    "default": {
+      "ideal":  "north or east",
+      "reason": "reduced heat gain"
+    }
+  },
+
+  "llm": {
+    "model": "mistral",
+    "temperature": 0.2,
+    "top_p": 0.9
+  }
+}
