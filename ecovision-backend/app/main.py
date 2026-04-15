@@ -9,18 +9,11 @@ from app.api.routes import projects
 from app.api.routes import auth
 from app.api.routes import files_protected
 from app.api.routes import analysis
-from fastapi.staticfiles import StaticFiles
-from fastapi import FastAPI
-from app.core.database import engine
-from app.models import User
-from app.core.database import Base
-from app.api.routes import users
-from app.api.routes import projects
-from app.api.routes import auth
-from fastapi.staticfiles import StaticFiles
+from app.api.routes import recommendations
 from app.api.routes import admin
 from app.api.routes import floorplan
 from app.api.routes import logs
+from fastapi.staticfiles import StaticFiles
 
 
 
@@ -44,7 +37,7 @@ app.include_router(auth.router)
 app.include_router(files_protected.router)
 app.include_router(admin.router)
 app.include_router(floorplan.router)
-app.include_router(analysis.router)
+app.include_router(recommendations.router)
 app.include_router(logs.router)
 
 

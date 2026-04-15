@@ -10,8 +10,8 @@ All configuration loaded from config.json — no hard-coded data.
 import ollama
 import json
 from pathlib import Path
-from orientation_prompt import ORIENTATION_PROMPT
-from space_geometry_prompt import SPACE_GEOMETRY_PROMPT
+from .orientation_prompt import ORIENTATION_PROMPT
+from .space_geometry_prompt import SPACE_GEOMETRY_PROMPT
 
 # ─────────────────────────────────────────────
 # 0. LOAD CONFIG + PROMPT TEMPLATE
