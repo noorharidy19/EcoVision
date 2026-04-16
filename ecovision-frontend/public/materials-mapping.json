@@ -1,0 +1,367 @@
+{
+  "wallBaseMaterials": [
+    {
+      "id": "MAT001",
+      "name": "100mm brick",
+      "category": "brick",
+      "r_value_m2K_W": 0.1141573033707865,
+      "carbon_kgCO2_per_m2": 41.550336,
+      "u_value_W_m2K": 8.7598
+    },
+    {
+      "id": "MAT002",
+      "name": "Fired clay brick 2400",
+      "category": "brick",
+      "r_value_m2K_W": 0.0761194029850746,
+      "carbon_kgCO2_per_m2": 52.1424,
+      "u_value_W_m2K": 13.1373
+    },
+    {
+      "id": "MAT003",
+      "name": "Fired clay brick 2240",
+      "category": "brick",
+      "r_value_m2K_W": 0.0860759493670886,
+      "carbon_kgCO2_per_m2": 48.66624,
+      "u_value_W_m2K": 11.6176
+    },
+    {
+      "id": "MAT004",
+      "name": "Fired clay brick 2080",
+      "category": "brick",
+      "r_value_m2K_W": 0.0999999999999999,
+      "carbon_kgCO2_per_m2": 45.19008,
+      "u_value_W_m2K": 10.0
+    },
+    {
+      "id": "MAT005",
+      "name": "Fired clay brick 1920",
+      "category": "brick",
+      "r_value_m2K_W": 0.1139664804469273,
+      "carbon_kgCO2_per_m2": 41.71392,
+      "u_value_W_m2K": 8.7745
+    },
+    {
+      "id": "MAT006",
+      "name": "Fired clay brick 1760",
+      "category": "brick",
+      "r_value_m2K_W": 0.1307692307692307,
+      "carbon_kgCO2_per_m2": 38.23776,
+      "u_value_W_m2K": 7.6471
+    },
+    {
+      "id": "MAT007",
+      "name": "Fired clay brick 1600",
+      "category": "brick",
+      "r_value_m2K_W": 0.151111111111111,
+      "carbon_kgCO2_per_m2": 34.761599999999994,
+      "u_value_W_m2K": 6.6176
+    },
+    {
+      "id": "MAT008",
+      "name": "Fired clay brick 1440",
+      "category": "brick",
+      "r_value_m2K_W": 0.1789473684210526,
+      "carbon_kgCO2_per_m2": 31.28544,
+      "u_value_W_m2K": 5.5882
+    },
+    {
+      "id": "MAT009",
+      "name": "Fired clay brick 1280",
+      "category": "brick",
+      "r_value_m2K_W": 0.2125,
+      "carbon_kgCO2_per_m2": 27.80928,
+      "u_value_W_m2K": 4.7059
+    },
+    {
+      "id": "MAT010",
+      "name": "Fired clay brick 1120",
+      "category": "brick",
+      "r_value_m2K_W": 0.2518518518518518,
+      "carbon_kgCO2_per_m2": 24.33312,
+      "u_value_W_m2K": 3.9706
+    },
+    {
+      "id": "MAT021",
+      "name": "Concrete stone aggregate 2400 51mm",
+      "category": "concrete",
+      "r_value_m2K_W": 0.0237209302325581,
+      "carbon_kgCO2_per_m2": 14.688,
+      "u_value_W_m2K": 42.1569
+    },
+    {
+      "id": "MAT022",
+      "name": "Concrete stone aggregate 2240 51mm",
+      "category": "concrete",
+      "r_value_m2K_W": 0.0261538461538461,
+      "carbon_kgCO2_per_m2": 13.708799999999998,
+      "u_value_W_m2K": 38.2353
+    },
+    {
+      "id": "MAT023",
+      "name": "Concrete stone aggregate 2080 51mm",
+      "category": "concrete",
+      "r_value_m2K_W": 0.0351724137931034,
+      "carbon_kgCO2_per_m2": 12.7296,
+      "u_value_W_m2K": 28.4314
+    },
+    {
+      "id": "MAT024",
+      "name": "Concrete limestone 2240 51mm",
+      "category": "concrete",
+      "r_value_m2K_W": 0.0318749999999999,
+      "carbon_kgCO2_per_m2": 12.79488,
+      "u_value_W_m2K": 31.3725
+    },
+    {
+      "id": "MAT025",
+      "name": "Concrete limestone 1920 51mm",
+      "category": "concrete",
+      "r_value_m2K_W": 0.0447368421052631,
+      "carbon_kgCO2_per_m2": 10.96704,
+      "u_value_W_m2K": 22.3529
+    },
+    {
+      "id": "MAT026",
+      "name": "Concrete limestone 1600 51mm",
+      "category": "concrete",
+      "r_value_m2K_W": 0.0645569620253164,
+      "carbon_kgCO2_per_m2": 9.1392,
+      "u_value_W_m2K": 15.4902
+    },
+    {
+      "id": "MAT027",
+      "name": "Concrete stone aggregate 2400 102mm",
+      "category": "concrete",
+      "r_value_m2K_W": 0.0474418604651162,
+      "carbon_kgCO2_per_m2": 29.376,
+      "u_value_W_m2K": 21.0784
+    },
+    {
+      "id": "MAT028",
+      "name": "Concrete stone aggregate 2240 102mm",
+      "category": "concrete",
+      "r_value_m2K_W": 0.0523076923076923,
+      "carbon_kgCO2_per_m2": 27.4176,
+      "u_value_W_m2K": 19.1176
+    },
+    {
+      "id": "MAT029",
+      "name": "Concrete stone aggregate 2080 102mm",
+      "category": "concrete",
+      "r_value_m2K_W": 0.0703448275862069,
+      "carbon_kgCO2_per_m2": 25.4592,
+      "u_value_W_m2K": 14.2157
+    },
+    {
+      "id": "MAT030",
+      "name": "Concrete limestone 2240 102mm",
+      "category": "concrete",
+      "r_value_m2K_W": 0.0637499999999999,
+      "carbon_kgCO2_per_m2": 25.58976,
+      "u_value_W_m2K": 15.6863
+    },
+    {
+      "id": "MAT031",
+      "name": "Concrete limestone 1920 102mm",
+      "category": "concrete",
+      "r_value_m2K_W": 0.0894736842105263,
+      "carbon_kgCO2_per_m2": 21.93408,
+      "u_value_W_m2K": 11.1765
+    },
+    {
+      "id": "MAT032",
+      "name": "Concrete limestone 1600 102mm",
+      "category": "concrete",
+      "r_value_m2K_W": 0.1291139240506329,
+      "carbon_kgCO2_per_m2": 18.2784,
+      "u_value_W_m2K": 7.7451
+    },
+    {
+      "id": "MAT033",
+      "name": "Concrete block limestone 200mm",
+      "category": "concrete_block",
+      "r_value_m2K_W": 0.1769911504424779,
+      "carbon_kgCO2_per_m2": 37.6584,
+      "u_value_W_m2K": 5.65
+    },
+    {
+      "id": "MAT034",
+      "name": "Concrete block limestone 200mm perlite",
+      "category": "concrete_block",
+      "r_value_m2K_W": 0.1769911504424779,
+      "carbon_kgCO2_per_m2": 81.77,
+      "u_value_W_m2K": 5.65
+    },
+    {
+      "id": "MAT035",
+      "name": "Concrete block limestone 300mm",
+      "category": "concrete_block",
+      "r_value_m2K_W": 0.2654867256637168,
+      "carbon_kgCO2_per_m2": 56.4876,
+      "u_value_W_m2K": 3.7667
+    },
+    {
+      "id": "MAT036",
+      "name": "Concrete block limestone 300mm perlite",
+      "category": "concrete_block",
+      "r_value_m2K_W": 0.2654867256637168,
+      "carbon_kgCO2_per_m2": 122.655,
+      "u_value_W_m2K": 3.7667
+    }
+  ],
+  "roofBaseMaterials": [
+    {
+      "id": "MAT027",
+      "name": "Concrete stone aggregate 2400 102mm",
+      "category": "concrete",
+      "r_value_m2K_W": 0.0474418604651162,
+      "carbon_kgCO2_per_m2": 29.376,
+      "u_value_W_m2K": 21.0784
+    },
+    {
+      "id": "MAT028",
+      "name": "Concrete stone aggregate 2240 102mm",
+      "category": "concrete",
+      "r_value_m2K_W": 0.0523076923076923,
+      "carbon_kgCO2_per_m2": 27.4176,
+      "u_value_W_m2K": 19.1176
+    },
+    {
+      "id": "MAT029",
+      "name": "Concrete stone aggregate 2080 102mm",
+      "category": "concrete",
+      "r_value_m2K_W": 0.0703448275862069,
+      "carbon_kgCO2_per_m2": 25.4592,
+      "u_value_W_m2K": 14.2157
+    },
+    {
+      "id": "MAT030",
+      "name": "Concrete limestone 2240 102mm",
+      "category": "concrete",
+      "r_value_m2K_W": 0.0637499999999999,
+      "carbon_kgCO2_per_m2": 25.58976,
+      "u_value_W_m2K": 15.6863
+    },
+    {
+      "id": "MAT031",
+      "name": "Concrete limestone 1920 102mm",
+      "category": "concrete",
+      "r_value_m2K_W": 0.0894736842105263,
+      "carbon_kgCO2_per_m2": 21.93408,
+      "u_value_W_m2K": 11.1765
+    },
+    {
+      "id": "MAT032",
+      "name": "Concrete limestone 1600 102mm",
+      "category": "concrete",
+      "r_value_m2K_W": 0.1291139240506329,
+      "carbon_kgCO2_per_m2": 18.2784,
+      "u_value_W_m2K": 7.7451
+    }
+  ],
+  "floorBaseMaterials": [
+    {
+      "id": "MAT033",
+      "name": "Concrete block limestone 200mm",
+      "category": "concrete_block",
+      "r_value_m2K_W": 0.1769911504424779,
+      "carbon_kgCO2_per_m2": 37.6584,
+      "u_value_W_m2K": 5.65
+    },
+    {
+      "id": "MAT034",
+      "name": "Concrete block limestone 200mm perlite",
+      "category": "concrete_block",
+      "r_value_m2K_W": 0.1769911504424779,
+      "carbon_kgCO2_per_m2": 81.77,
+      "u_value_W_m2K": 5.65
+    },
+    {
+      "id": "MAT035",
+      "name": "Concrete block limestone 300mm",
+      "category": "concrete_block",
+      "r_value_m2K_W": 0.2654867256637168,
+      "carbon_kgCO2_per_m2": 56.4876,
+      "u_value_W_m2K": 3.7667
+    },
+    {
+      "id": "MAT036",
+      "name": "Concrete block limestone 300mm perlite",
+      "category": "concrete_block",
+      "r_value_m2K_W": 0.2654867256637168,
+      "carbon_kgCO2_per_m2": 122.655,
+      "u_value_W_m2K": 3.7667
+    }
+  ],
+  "insulationMaterials": [
+    {
+      "id": "NONE",
+      "name": "None",
+      "category": "none",
+      "r_value_m2K_W": 0,
+      "carbon_kgCO2_per_m2": 0,
+      "u_value_W_m2K": 0
+    },
+    {
+      "id": "MAT037",
+      "name": "Cellular polyurethane",
+      "category": "Insulation",
+      "r_value_m2K_W": 1.020408163265306,
+      "carbon_kgCO2_per_m2": 2.7192000000000003,
+      "u_value_W_m2K": 0.98
+    },
+    {
+      "id": "MAT038",
+      "name": "Expanded Polystyrene standard",
+      "category": "Insulation",
+      "r_value_m2K_W": 0.8620689655172414,
+      "carbon_kgCO2_per_m2": 2.67525,
+      "u_value_W_m2K": 1.16
+    },
+    {
+      "id": "MAT039",
+      "name": "Expanded Polystyrene low density ",
+      "category": "Insulation",
+      "r_value_m2K_W": 0.6756756756756758,
+      "carbon_kgCO2_per_m2": 1.476,
+      "u_value_W_m2K": 1.48
+    },
+    {
+      "id": "MAT040",
+      "name": "Expanded Polystyrene high density",
+      "category": "Insulation",
+      "r_value_m2K_W": 0.7575757575757576,
+      "carbon_kgCO2_per_m2": 2.952,
+      "u_value_W_m2K": 1.32
+    }
+  ],
+  "windowTypes": [
+    {
+      "id": "MAT041",
+      "name": "Single Glazing",
+      "category": "window",
+      "r_value_m2K_W": 0.1818,
+      "carbon_kgCO2_per_m2": 0.0,
+      "u_value_W_m2K": 5.5,
+      "shgc": 0.85
+    },
+    {
+      "id": "MAT042",
+      "name": "Double Glazing",
+      "category": "window",
+      "r_value_m2K_W": 0.3571,
+      "carbon_kgCO2_per_m2": 0.0,
+      "u_value_W_m2K": 2.8,
+      "shgc": 0.65
+    },
+    {
+      "id": "MAT043",
+      "name": "Low-E Double Glazing",
+      "category": "window",
+      "r_value_m2K_W": 0.625,
+      "carbon_kgCO2_per_m2": 0.0,
+      "u_value_W_m2K": 1.6,
+      "shgc": 0.45
+    }
+  ]
+}

@@ -38,6 +38,7 @@ app.include_router(files_protected.router)
 app.include_router(admin.router)
 app.include_router(floorplan.router)
 app.include_router(recommendations.router)
+app.include_router(analysis.router)
 app.include_router(logs.router)
 
 

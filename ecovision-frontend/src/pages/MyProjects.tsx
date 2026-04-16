@@ -181,6 +181,9 @@ const MyProjects = () => {
               <button onClick={() => navigate(`/analysis/${proj.id}`)}>
                 Analysis
               </button>
+              <button onClick={() => navigate(`/sustainability/${proj.id}`)}>
+                Sustainability
+              </button>
               <button onClick={() => navigate(`/project/${proj.id}/requests`)}>
                 Requests
               </button>
@@ -252,6 +255,9 @@ const MyProjects = () => {
 
                   <button onClick={() => navigate(`/analysis/${proj.id}`)}>
                     Analysis
+                  </button>
+                  <button onClick={() => navigate(`/sustainability/${proj.id}`)}>
+                    Sustainability
                   </button>
                 </div>
               </div>

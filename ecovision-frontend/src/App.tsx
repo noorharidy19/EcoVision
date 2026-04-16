@@ -23,6 +23,8 @@ import Analysis from "./pages/Analysis";
 import Materials from "./pages/materials";
 import AdminUsers from "./pages/AdminUsers";
 import AccessRequests from "./pages/Requests";
+import Sustainability from "./pages/sustainability";
+import Recommendations from "./pages/recommendations";
 
 
 
@@ -49,6 +51,8 @@ function App() {
         <Route path="/ai-models" element={<RequireRole roles={["admin"]}><AIModels /></RequireRole>} />
         <Route path="/logs" element={<RequireRole roles={["admin"]}><Logs /></RequireRole>} />
         <Route path="/analysis/:id" element={<Analysis />} />
+        <Route path="/sustainability/:id" element={<Sustainability />} />
+        <Route path="/recommendations/:id" element={<Recommendations />} />
         <Route path="/project/:id/requests" element={<AccessRequests />} />
         <Route path="/users" element={<RequireRole roles={["admin"]}><AdminUsers /></RequireRole>} />
       </Routes>

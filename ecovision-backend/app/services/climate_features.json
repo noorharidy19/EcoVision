@@ -1,0 +1,68 @@
+{
+  "Alexandria": [
+    {
+      "avg_temp": 20.95,
+      "max_temp": 30.9,
+      "min_temp": 9.2,
+      "avg_solar": 233.27,
+      "avg_humidity": 71.36,
+      "avg_wind_speed": 4.28,
+      "source": "EGY_IK_Port.Alexandria.623150_TMYx.epw"
+    }
+  ],
+  "Aswan": [
+    {
+      "avg_temp": 26.77,
+      "max_temp": 47.2,
+      "min_temp": 4.2,
+      "avg_solar": 272.34,
+      "avg_humidity": 26.62,
+      "avg_wind_speed": 4.41,
+      "source": "EGY_AN_Aswan.Intl.AP.624140_TMYx.epw"
+    }
+  ],
+  "Cairo": [
+    {
+      "avg_temp": 22.13,
+      "max_temp": 42.4,
+      "min_temp": 5.2,
+      "avg_solar": 245.26,
+      "avg_humidity": 54.91,
+      "avg_wind_speed": 3.76,
+      "source": "EGY_QH_Cairo.Intl.AP.623660_TMYx.epw"
+    }
+  ],
+  "Dahab": [
+    {
+      "avg_temp": 24.34,
+      "max_temp": 38.5,
+      "min_temp": 9.4,
+      "avg_solar": 256.71,
+      "avg_humidity": 41.19,
+      "avg_wind_speed": 4.66,
+      "source": "EGY_JS_Dahab.624670_TMYx.2011-2025.epw"
+    }
+  ],
+  "Hurghada": [
+    {
+      "avg_temp": 25.37,
+      "max_temp": 43.0,
+      "min_temp": 9.5,
+      "avg_solar": 261.72,
+      "avg_humidity": 44.89,
+      "avg_wind_speed": 5.55,
+      "source": "EGY_BA_Hurghada.Intl.AP.624630_TMYx.epw"
+    }
+  ],
+  "Portsaid": [
+    {
+      "avg_temp": 21.34,
+      "max_temp": 34.0,
+      "min_temp": 9.0,
+      "avg_solar": 232.0,
+      "avg_humidity": 71.07,
+      "avg_wind_speed": 5.0,
+      "source": "EGY_BS_Port.Said.AP.623320_TMYx.epw"
+    }
+  ]
+}
