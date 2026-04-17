@@ -115,6 +115,8 @@ const Sustainability = () => {
   
   const [windowType, setWindowType] = useState<WindowType | null>(null);
 
+  const [visualScore, setVisualScore] = useState<any>(null);
+
   // Load project and floorplan data
   useEffect(() => {
     if (id && id !== "new" && id !== "undefined") {
@@ -213,20 +215,47 @@ const Sustainability = () => {
 
   // Generate Visual Comfort recommendations
   const generateVisualRecommendations = async () => {
-    if (!floorplan) {
-      setError("No floorplan available");
-      return;
+  if (!floorplan) {
+    setError("No floorplan available");
+    return;
+  }
+
+  setVisualLoading(true);
+  setError(null);
+
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) throw new Error("Not authenticated");
+
+    // Use the floorplan's json_data if available, otherwise fetch it
+    const floorplanData = floorplan.json_data || {};
+
+    const response = await fetch("http://127.0.0.1:8000/analysis/visual", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        floorplan_id: floorplan.id,
+        floorplan_json: floorplanData
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Visual analysis failed: ${errorText}`);
     }
 
-    setVisualLoading(true);
-    setError(null);
-
-    try {
-      setMode("visual");
-    } finally {
-      setVisualLoading(false);
-    }
-  };
+    const data = await response.json();
+    setVisualScore(data);
+    setMode("visual");
+  } catch (err) {
+    setError(err instanceof Error ? err.message : "Visual analysis failed");
+  } finally {
+    setVisualLoading(false);
+  }
+}; 
 
   // Generate Sustainability recommendations
   const generateSustainabilityRecommendations = async () => {
@@ -738,6 +767,142 @@ const Sustainability = () => {
       </div>
     );
   };
+
+  const renderVisualContent = () => {
+  const getVisualColor = (score: number) => {
+    if (score >= 67) return "#4ECDC4";
+    if (score >= 34) return "#f59e0b";
+    return "#ef4444";
+  };
+
+  if (!visualScore) {
+    return (
+      <div style={{ padding: "20px", textAlign: "center" }}>
+        <p>Click "✨ Visual Comfort" to run the analysis.</p>
+        <button onClick={() => setMode("overview")}
+          style={{ padding: "10px 18px", borderRadius: "12px",
+            border: "none", background: "#d1fae5",
+            color: "#065f46", fontWeight: "600", cursor: "pointer" }}>
+          ← Back
+        </button>
+      </div>
+    );
+  }
+
+  const pct = visualScore.comfort_percentage;
+  const cls = visualScore.comfort_class;
+
+  return (
+    <div style={{ padding: "20px", maxHeight: "90vh", overflowY: "auto" }}>
+      <h4>✨ Visual Comfort Analysis</h4>
+
+      {/* ── MAIN SCORE ── */}
+      <div style={{
+        backgroundColor: "#f0fbfa", padding: "25px", borderRadius: "12px",
+        border: `3px solid ${getVisualColor(pct)}`,
+        marginBottom: "20px", textAlign: "center"
+      }}>
+        <div style={{
+          fontSize: "48px", fontWeight: "bold",
+          color: getVisualColor(pct), marginBottom: "10px"
+        }}>
+          {pct.toFixed(1)}%
+        </div>
+        <div style={{ fontSize: "18px", fontWeight: "600",
+          color: "#065f46", marginBottom: "8px" }}>
+          Comfort Class: <span style={{ color: getVisualColor(pct) }}>{cls}</span>
+        </div>
+        <p style={{ margin: 0, color: "#666", fontSize: "14px" }}>
+          {visualScore.analysis?.[0]}
+        </p>
+      </div>
+
+      {/* ── METRICS ── */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr",
+        gap: "15px", marginBottom: "20px" }}>
+        {Object.values(visualScore.metrics as Record<string, any>).map(
+          (m: any, i: number) => (
+          <div key={i} style={{
+            backgroundColor: "#e5f5f0", padding: "15px",
+            borderRadius: "8px", border: "1px solid #a7f3d0"
+          }}>
+            <h5 style={{ marginTop: 0, color: "#065f46", fontSize: "13px" }}>
+              {m.label}
+            </h5>
+            <p style={{ margin: "5px 0", fontSize: "18px", fontWeight: "bold" }}>
+              {typeof m.value === "number" ? m.value.toFixed(1) : m.value}
+              {m.unit ? ` ${m.unit}` : ""}
+            </p>
+            <p style={{ margin: "3px 0", fontSize: "11px", color: "#666" }}>
+              Target: {m.target}
+            </p>
+            <p style={{ margin: "3px 0", fontSize: "12px",
+              color: m.status.includes("Optimal") || 
+                     m.status.includes("Imperceptible") ||
+                     m.status.includes("Comfortable") ||
+                     m.status.includes("Excellent") ? "#065f46" : "#b45309"
+            }}>
+              {m.status}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      {/* ── GEOMETRY ── */}
+      <div style={{
+        backgroundColor: "#ecfdf5", padding: "15px", borderRadius: "8px",
+        border: "2px solid #a7f3d0", marginBottom: "20px"
+      }}>
+        <h5 style={{ marginTop: 0, color: "#065f46" }}>🏠 Floor Plan Geometry</h5>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr",
+          gap: "8px", fontSize: "13px" }}>
+          <p style={{ margin: "4px 0" }}>
+            <strong>Floor Area:</strong> {visualScore.geometry.total_area_m2} m²
+          </p>
+          <p style={{ margin: "4px 0" }}>
+            <strong>Window Area:</strong> {visualScore.geometry.total_window_area_m2} m²
+          </p>
+          <p style={{ margin: "4px 0" }}>
+            <strong>WWR:</strong> {visualScore.geometry.wwr_percent}%
+          </p>
+          <p style={{ margin: "4px 0" }}>
+            <strong>Windows / Rooms:</strong> {visualScore.geometry.num_windows} / {visualScore.geometry.num_rooms}
+          </p>
+          <p style={{ margin: "4px 0" }}>
+            <strong>Avg Window Size:</strong> {visualScore.geometry.avg_window_area_m2} m²
+          </p>
+          <p style={{ margin: "4px 0" }}>
+            <strong>Windows per Room:</strong> {visualScore.geometry.windows_per_room}
+          </p>
+        </div>
+      </div>
+
+      {/* ── ANALYSIS REPORT ── */}
+      <div style={{
+        backgroundColor: "#f8fafc", padding: "15px", borderRadius: "8px",
+        border: "1px solid #cbd5e1", marginBottom: "20px"
+      }}>
+        <h5 style={{ marginTop: 0, color: "#1e293b" }}>📋 Analysis Report</h5>
+        {visualScore.analysis?.slice(1).map((line: string, i: number) => (
+          <div key={i} style={{
+            padding: "10px", marginBottom: "8px", borderRadius: "6px",
+            backgroundColor: "#fff", border: "1px solid #e2e8f0",
+            fontSize: "13px", color: "#374151"
+          }}>
+            {line}
+          </div>
+        ))}
+      </div>
+
+      <button onClick={() => setMode("overview")}
+        style={{ padding: "10px 18px", borderRadius: "12px",
+          border: "none", background: "#d1fae5",
+          color: "#065f46", fontWeight: "600", cursor: "pointer" }}>
+        ← Back
+      </button>
+    </div>
+  );
+};
 
   // Render room-by-room analysis with visual comparisons
   const renderRoomByRoomAnalysis = () => {
@@ -1675,7 +1840,7 @@ const Sustainability = () => {
             )}
 
             {mode === "thermal" && renderThermalContent()}
-            {mode === "visual" && renderRecommendationContent(null, "Visual Comfort Recommendations", "✨")}
+            {mode === "visual" && renderVisualContent()}
             {mode === "sustainability" && renderSustainabilityContent()}
             {mode === "material" && renderMaterialSelection()}
 

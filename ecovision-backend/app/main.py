@@ -14,7 +14,7 @@ from app.api.routes import admin
 from app.api.routes import floorplan
 from app.api.routes import logs
 from fastapi.staticfiles import StaticFiles
-
+from app.api.routes import visual_comfort
 
 
 
@@ -40,6 +40,7 @@ app.include_router(floorplan.router)
 app.include_router(recommendations.router)
 app.include_router(analysis.router)
 app.include_router(logs.router)
+app.include_router(visual_comfort.router)
 
 
 
