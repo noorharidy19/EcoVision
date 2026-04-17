@@ -4,12 +4,20 @@ from typing import Optional, Dict
 from app.services.material_mapper import map_user_materials_to_values
 from app.services.thermal_comfort_engine import analyze_thermal_comfort
 from app.services.thermal_input_converter import convert_test_json_to_engine_features
-from app.core.security import get_current_user
+from app.services.analysis.sustainability_model import (
+    predict_sustainability_score, 
+    get_alternative_materials,
+    optimize_building_from_ids
+)
+from app.services.auth_service import get_current_user
 from app.core.database import get_db
 from app.models.floorplan import Floorplan
 from sqlalchemy.orm import Session
 import json
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/analysis", tags=["analysis"])
 
@@ -59,6 +67,13 @@ class ThermalAnalysisResponse(BaseModel):
     u_floor: float
     u_window: float
     shgc: float
+
+
+class SustainabilityAnalysisRequest(BaseModel):
+    """Request for sustainability analysis using ML model"""
+    floorplan_id: int
+    materials: Dict[str, str]  # e.g., {'wall_base': 'MAT001', 'roof_base': 'MAT021', ...}
+    rooms: Optional[list] = None  # Optional room data from floorplan
 
 # -----------------------------
 # Climate Logic
@@ -204,4 +219,87 @@ async def analyze_thermal(
         raise HTTPException(
             status_code=500,
             detail=f"Thermal analysis error: {str(e)}"
+        )
+
+
+# ─────────────────────────────────────────────
+# SUSTAINABILITY ANALYSIS ENDPOINT
+# ─────────────────────────────────────────────
+@router.post("/sustainability")
+async def analyze_sustainability(
+    request: SustainabilityAnalysisRequest,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user)
+):
+    """
+    Analyze sustainability of material selections using trained ML model.
+    
+    Takes material IDs and room data, returns sustainability scores and carbon footprint.
+    
+    Args:
+        floorplan_id: ID of the floorplan being analyzed
+        materials: Dictionary mapping building elements to material IDs
+                  e.g., {'wall_base': 'MAT001', 'wall_insulation': 'MAT037', ...}
+        rooms: Optional list of room data from floorplan
+    
+    Returns:
+        Sustainability scores, carbon footprint breakdown, and alternative suggestions
+    """
+    try:
+        logger.info(f"🔍 SUSTAINABILITY ANALYSIS REQUEST RECEIVED")
+        logger.info(f"📌 Floorplan ID: {request.floorplan_id}")
+        logger.info(f"📌 Materials: {request.materials}")
+        
+        # Check authentication
+        if not current_user:
+            logger.warning("❌ Authentication failed: No current user")
+            raise HTTPException(status_code=401, detail="Not authenticated")
+        
+        # Fetch and validate floorplan
+        floorplan = db.query(Floorplan).filter(
+            Floorplan.id == request.floorplan_id
+        ).first()
+        
+        if not floorplan:
+            raise HTTPException(status_code=404, detail="Floorplan not found")
+        
+        # Verify ownership
+        if not floorplan.project or floorplan.project.user_id != current_user.id:
+            raise HTTPException(status_code=403, detail="Unauthorized")
+        
+        # Get rooms from floorplan if not provided
+        rooms = request.rooms
+        if not rooms and floorplan.json_data:
+            rooms = floorplan.json_data.get('rooms', [])
+        
+        if not rooms:
+            raise HTTPException(status_code=400, detail="No rooms data available for analysis")
+        
+        logger.info(f"📊 Analyzing {len(rooms)} rooms with {len(request.materials)} materials")
+        
+        # Validate materials - filter out None values
+        valid_materials = {k: v for k, v in request.materials.items() if v is not None}
+        valid_material_ids = list(valid_materials.values())
+        
+        if not valid_material_ids:
+            raise HTTPException(status_code=400, detail="No valid materials provided")
+        
+        # Run room-by-room optimization
+        result = optimize_building_from_ids(valid_material_ids, rooms)
+        
+        if result.get("status") == "error" or "error" in result:
+            logger.error(f"❌ Optimization error: {result.get('error')}")
+            raise HTTPException(status_code=400, detail=result.get("error", "Optimization failed"))
+        
+        logger.info(f"✅ Room-by-room analysis completed for {len(result.get('rooms', []))} rooms")
+        
+        return result
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Sustainability analysis error: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Sustainability analysis error: {str(e)}"
         )

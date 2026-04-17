@@ -49,6 +49,33 @@ interface MaterialsMapping {
   windowTypes: WindowType[];
 }
 
+interface RoomAnalysis {
+  room: string;
+  area_m2: number;
+  your_selection: {
+    materials: Record<string, { name: string; carbon_kg: number }>;
+    total_carbon_kg: number;
+  };
+  recommended_solution: {
+    materials: Record<string, { name: string; carbon_kg: number }>;
+    total_carbon_kg: number;
+  };
+  carbon_savings: {
+    saved_kg: number;
+    reduction_percent: number;
+  };
+}
+
+interface MLAnalysisResult {
+  summary: {
+    your_total_carbon: number;
+    optimized_total_carbon: number;
+    total_savings: number;
+    reduction_percent: number;
+  };
+  rooms: RoomAnalysis[];
+}
+
 type RecommendationMode = "overview" | "thermal" | "visual" | "sustainability" | "material";
 
 const Sustainability = () => {
@@ -66,11 +93,15 @@ const Sustainability = () => {
   const [visualLoading, setVisualLoading] = useState(false);
   const [sustainabilityLoading, setSustainabilityLoading] = useState(false);
   
+  // ML Model analysis states
+  const [mlSustainabilityScore, setMlSustainabilityScore] = useState<any>(null);
+  const [mlAnalysisLoading, setMlAnalysisLoading] = useState(false);
+  const [roomByRoomAnalysis, setRoomByRoomAnalysis] = useState<MLAnalysisResult | null>(null);
+  
   // Material mapping states
   const [materialMapping, setMaterialMapping] = useState<MaterialsMapping | null>(null);
   const [thermalScore, setThermalScore] = useState<any>(null);
   const [thermalScoreLoading, setThermalScoreLoading] = useState(false);
-  const [carbonFootprint, setCarbonFootprint] = useState<any>(null);
   
   // Building element selections
   const [wallBase, setWallBase] = useState<Material | null>(null);
@@ -317,13 +348,94 @@ const Sustainability = () => {
       console.log("Carbon footprint calculated:", carbonData);
       
       setThermalScore(thermalData);
-      setCarbonFootprint(carbonData);
       setMode("thermal");
     } catch (err) {
       console.error("Error calculating thermal score:", err);
       setError(err instanceof Error ? err.message : "Failed to calculate thermal score");
     } finally {
       setThermalScoreLoading(false);
+    }
+  };
+
+  // Analyze sustainability using ML model
+  const analyzeWithMLModel = async () => {
+    if (!wallBase || !roofBase || !floorBase || !windowType) {
+      setError("Please complete all material selections");
+      return;
+    }
+
+    if (!floorplan) {
+      setError("No floorplan available");
+      return;
+    }
+
+    setMlAnalysisLoading(true);
+    setError(null);
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("Not authenticated");
+        return;
+      }
+
+      // Get rooms from floorplan JSON data
+      const rooms = floorplan.json_data?.rooms || [];
+
+      // Build material ID map - need to match material names to IDs
+      const materialIdMap: { [key: string]: string } = {
+        [wallBase.name]: wallBase.id,
+        [roofBase.name]: roofBase.id,
+        [floorBase.name]: floorBase.id,
+        [windowType.name]: windowType.id,
+      };
+
+      // Add optional materials
+      if (wallInsulation) materialIdMap[wallInsulation.name] = wallInsulation.id;
+      if (roofInsulation) materialIdMap[roofInsulation.name] = roofInsulation.id;
+      if (floorInsulation) materialIdMap[floorInsulation.name] = floorInsulation.id;
+
+      const materials = {
+        wall_base: wallBase.id,
+        wall_insulation: wallInsulation?.id,
+        roof_base: roofBase.id,
+        roof_insulation: roofInsulation?.id,
+        floor_base: floorBase.id,
+        floor_insulation: floorInsulation?.id,
+        window: windowType.id
+      };
+
+      const response = await fetch("http://127.0.0.1:8000/analysis/sustainability", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          floorplan_id: floorplan.id,
+          materials: materials,
+          rooms: rooms
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Sustainability analysis failed: ${errorText}`);
+      }
+
+      const sustainabilityData = await response.json();
+      console.log("ML Sustainability analysis received:", sustainabilityData);
+      setMlSustainabilityScore(sustainabilityData);
+      
+      // Extract room-by-room analysis if available
+      if (sustainabilityData && sustainabilityData.summary) {
+        setRoomByRoomAnalysis(sustainabilityData);
+      }
+    } catch (err) {
+      console.error("Error in ML sustainability analysis:", err);
+      setError(err instanceof Error ? err.message : "Failed to analyze sustainability");
+    } finally {
+      setMlAnalysisLoading(false);
     }
   };
 
@@ -543,76 +655,11 @@ const Sustainability = () => {
               </p>
             </div>
 
-            {carbonFootprint && (
-              <div style={{
-                backgroundColor: "#fef3c7",
-                padding: "15px",
-                borderRadius: "8px",
-                border: "2px solid #fcd34d",
-                marginBottom: "20px"
-              }}>
-                <h5 style={{ marginTop: 0, color: "#78350f" }}>♻️ Carbon Footprint Analysis</h5>
-                
-                <div style={{
-                  backgroundColor: "#fff7ed",
-                  padding: "12px",
-                  borderRadius: "6px",
-                  marginBottom: "12px",
-                  textAlign: "center"
-                }}>
-                  <div style={{
-                    fontSize: "32px",
-                    fontWeight: "bold",
-                    color: "#ea580c",
-                    marginBottom: "5px"
-                  }}>
-                    {carbonFootprint.total.toFixed(2)}
-                  </div>
-                  <p style={{ margin: 0, fontSize: "13px", color: "#78350f" }}>
-                    kg CO₂/m² (Total Embodied Carbon)
-                  </p>
-                </div>
-
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", fontSize: "12px" }}>
-                  <div style={{ backgroundColor: "#fff", padding: "10px", borderRadius: "5px", border: "1px solid #fed7aa" }}>
-                    <p style={{ margin: "3px 0", fontWeight: "600", color: "#78350f" }}>🧱 Wall</p>
-                    <p style={{ margin: "3px 0" }}>Base: {carbonFootprint.breakdown.wall.base.toFixed(2)}</p>
-                    <p style={{ margin: "3px 0" }}>Insulation: {carbonFootprint.breakdown.wall.insulation.toFixed(2)}</p>
-                    <p style={{ margin: "3px 0", borderTop: "1px solid #fed7aa", paddingTop: "3px", fontWeight: "600" }}>Total: {carbonFootprint.breakdown.wall.total.toFixed(2)}</p>
-                  </div>
-
-                  <div style={{ backgroundColor: "#fff", padding: "10px", borderRadius: "5px", border: "1px solid #fed7aa" }}>
-                    <p style={{ margin: "3px 0", fontWeight: "600", color: "#78350f" }}>🏠 Roof</p>
-                    <p style={{ margin: "3px 0" }}>Base: {carbonFootprint.breakdown.roof.base.toFixed(2)}</p>
-                    <p style={{ margin: "3px 0" }}>Insulation: {carbonFootprint.breakdown.roof.insulation.toFixed(2)}</p>
-                    <p style={{ margin: "3px 0", borderTop: "1px solid #fed7aa", paddingTop: "3px", fontWeight: "600" }}>Total: {carbonFootprint.breakdown.roof.total.toFixed(2)}</p>
-                  </div>
-
-                  <div style={{ backgroundColor: "#fff", padding: "10px", borderRadius: "5px", border: "1px solid #fed7aa" }}>
-                    <p style={{ margin: "3px 0", fontWeight: "600", color: "#78350f" }}>⬇️ Floor</p>
-                    <p style={{ margin: "3px 0" }}>Base: {carbonFootprint.breakdown.floor.base.toFixed(2)}</p>
-                    <p style={{ margin: "3px 0" }}>Insulation: {carbonFootprint.breakdown.floor.insulation.toFixed(2)}</p>
-                    <p style={{ margin: "3px 0", borderTop: "1px solid #fed7aa", paddingTop: "3px", fontWeight: "600" }}>Total: {carbonFootprint.breakdown.floor.total.toFixed(2)}</p>
-                  </div>
-
-                  <div style={{ backgroundColor: "#fff", padding: "10px", borderRadius: "5px", border: "1px solid #fed7aa" }}>
-                    <p style={{ margin: "3px 0", fontWeight: "600", color: "#78350f" }}>🪟 Window</p>
-                    <p style={{ margin: "3px 0" }}>Carbon: {carbonFootprint.breakdown.window.toFixed(2)}</p>
-                    <p style={{ margin: "3px 0", color: "#999", fontSize: "11px" }}>kg CO₂/m²</p>
-                  </div>
-                </div>
-
-                <div style={{ marginTop: "12px", fontSize: "12px", color: "#78350f", fontStyle: "italic" }}>
-                  💡 This represents the embodied carbon from manufacturing and transporting the selected materials.
-                </div>
-              </div>
-            )}
 
             <div style={{ display: "flex", gap: "10px" }}>
               <button 
                 onClick={() => {
                   setThermalScore(null);
-                  setCarbonFootprint(null);
                   setMode('overview');
                 }} 
                 style={{ 
@@ -688,6 +735,231 @@ const Sustainability = () => {
             </button>
           </div>
         )}
+      </div>
+    );
+  };
+
+  // Render room-by-room analysis with visual comparisons
+  const renderRoomByRoomAnalysis = () => {
+    if (!roomByRoomAnalysis) return null;
+
+    const { summary, rooms } = roomByRoomAnalysis;
+
+    return (
+      <div style={{
+        backgroundColor: "#f8fafc",
+        padding: "20px",
+        borderRadius: "12px",
+        border: "2px solid #e2e8f0",
+        marginTop: "20px"
+      }}>
+        <h5 style={{ marginTop: 0, color: "#1e293b", display: "flex", alignItems: "center", gap: "8px" }}>
+          🏗️ Room-by-Room Carbon Analysis
+        </h5>
+
+        {/* Summary Stats */}
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+          gap: "12px",
+          marginBottom: "20px"
+        }}>
+          <div style={{
+            backgroundColor: "#dcfce7",
+            padding: "15px",
+            borderRadius: "8px",
+            border: "1px solid #86efac"
+          }}>
+            <p style={{ margin: "0 0 4px 0", fontSize: "12px", color: "#166534", fontWeight: "500" }}>
+              Your Total Carbon
+            </p>
+            <p style={{ margin: "0", fontSize: "24px", fontWeight: "bold", color: "#15803d" }}>
+              {summary.your_total_carbon.toFixed(0)} kg CO₂
+            </p>
+          </div>
+
+          <div style={{
+            backgroundColor: "#dbeafe",
+            padding: "15px",
+            borderRadius: "8px",
+            border: "1px solid #93c5fd"
+          }}>
+            <p style={{ margin: "0 0 4px 0", fontSize: "12px", color: "#0c4a6e", fontWeight: "500" }}>
+              Optimized Carbon
+            </p>
+            <p style={{ margin: "0", fontSize: "24px", fontWeight: "bold", color: "#0369a1" }}>
+              {summary.optimized_total_carbon.toFixed(0)} kg CO₂
+            </p>
+          </div>
+
+          <div style={{
+            backgroundColor: "#fef3c7",
+            padding: "15px",
+            borderRadius: "8px",
+            border: "1px solid #fcd34d"
+          }}>
+            <p style={{ margin: "0 0 4px 0", fontSize: "12px", color: "#78350f", fontWeight: "500" }}>
+              Total Savings
+            </p>
+            <p style={{ margin: "0", fontSize: "24px", fontWeight: "bold", color: "#d97706" }}>
+              {summary.total_savings.toFixed(0)} kg CO₂
+            </p>
+          </div>
+
+          <div style={{
+            backgroundColor: "#fecdd3",
+            padding: "15px",
+            borderRadius: "8px",
+            border: "1px solid #fca5a5"
+          }}>
+            <p style={{ margin: "0 0 4px 0", fontSize: "12px", color: "#7f1d1d", fontWeight: "500" }}>
+              Reduction
+            </p>
+            <p style={{ margin: "0", fontSize: "24px", fontWeight: "bold", color: "#991b1b" }}>
+              {summary.reduction_percent.toFixed(1)}%
+            </p>
+          </div>
+        </div>
+
+        {/* Room Cards */}
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+          gap: "15px"
+        }}>
+          {rooms.map((room, idx) => (
+            <div key={idx} style={{
+              backgroundColor: "#fff",
+              padding: "15px",
+              borderRadius: "8px",
+              border: "1px solid #e2e8f0",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
+            }}>
+              <h6 style={{ margin: "0 0 12px 0", color: "#1e293b", fontSize: "16px", fontWeight: "600" }}>
+                📍 {room.room}
+              </h6>
+
+              <p style={{ margin: "0 0 12px 0", fontSize: "13px", color: "#64748b" }}>
+                <strong>Area:</strong> {room.area_m2} m²
+              </p>
+
+              {/* Carbon Comparison Bar */}
+              <div style={{ marginBottom: "15px" }}>
+                <p style={{ margin: "0 0 6px 0", fontSize: "12px", color: "#475569", fontWeight: "500" }}>
+                  Carbon Comparison
+                </p>
+
+                {/* Your Selection */}
+                <div style={{ marginBottom: "8px" }}>
+                  <div style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: "4px"
+                  }}>
+                    <span style={{ fontSize: "12px", color: "#64748b" }}>Your Selection</span>
+                    <span style={{ fontSize: "12px", fontWeight: "600", color: "#d97706" }}>
+                      {room.your_selection.total_carbon_kg.toFixed(1)} kg CO₂
+                    </span>
+                  </div>
+                  <div style={{
+                    backgroundColor: "#fed7aa",
+                    height: "24px",
+                    borderRadius: "4px",
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    padding: "0 6px",
+                    fontSize: "11px",
+                    fontWeight: "600",
+                    color: "#92400e"
+                  }}>
+                    {(room.your_selection.total_carbon_kg > 0 ? 
+                      ((room.your_selection.total_carbon_kg / Math.max(room.your_selection.total_carbon_kg, room.recommended_solution.total_carbon_kg)) * 100) 
+                      : 0).toFixed(0)}%
+                  </div>
+                </div>
+
+                {/* Recommended Solution */}
+                <div>
+                  <div style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: "4px"
+                  }}>
+                    <span style={{ fontSize: "12px", color: "#64748b" }}>Recommended</span>
+                    <span style={{ fontSize: "12px", fontWeight: "600", color: "#059669" }}>
+                      {room.recommended_solution.total_carbon_kg.toFixed(1)} kg CO₂
+                    </span>
+                  </div>
+                  <div style={{
+                    backgroundColor: "#a7f3d0",
+                    height: "24px",
+                    borderRadius: "4px",
+                    width: ((room.recommended_solution.total_carbon_kg / Math.max(room.your_selection.total_carbon_kg, room.recommended_solution.total_carbon_kg)) * 100) + "%",
+                    display: "flex",
+                    alignItems: "center",
+                    padding: "0 6px",
+                    fontSize: "11px",
+                    fontWeight: "600",
+                    color: "#065f46"
+                  }}>
+                    {(room.recommended_solution.total_carbon_kg > 0 ?
+                      ((room.recommended_solution.total_carbon_kg / Math.max(room.your_selection.total_carbon_kg, room.recommended_solution.total_carbon_kg)) * 100)
+                      : 0).toFixed(0)}%
+                  </div>
+                </div>
+              </div>
+
+              {/* Savings Info */}
+              <div style={{
+                backgroundColor: "#fef3c7",
+                padding: "10px",
+                borderRadius: "6px",
+                border: "1px solid #fcd34d"
+              }}>
+                <p style={{ margin: "0 0 4px 0", fontSize: "12px", color: "#78350f", fontWeight: "600" }}>
+                  💚 Carbon Savings
+                </p>
+                <p style={{ margin: "0", fontSize: "16px", fontWeight: "bold", color: "#d97706" }}>
+                  {room.carbon_savings.saved_kg.toFixed(1)} kg CO₂
+                </p>
+                <p style={{ margin: "4px 0 0 0", fontSize: "11px", color: "#78350f" }}>
+                  {room.carbon_savings.reduction_percent.toFixed(1)}% reduction
+                </p>
+              </div>
+
+              {/* Material Details */}
+              <div style={{ marginTop: "12px" }}>
+                <p style={{ margin: "0 0 6px 0", fontSize: "12px", color: "#475569", fontWeight: "500" }}>
+                  Material Changes
+                </p>
+
+                <div style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "8px",
+                  fontSize: "11px"
+                }}>
+                  {Object.entries(room.your_selection.materials).map(([surface, material]: any) => (
+                    <div key={surface}>
+                      <div style={{ color: "#64748b", marginBottom: "2px" }}>
+                        <strong>{surface}:</strong>
+                      </div>
+                      <div style={{ color: "#94a3b8", fontSize: "10px", marginBottom: "4px" }}>
+                        ❌ {material.name}
+                      </div>
+                      <div style={{ color: "#10b981", fontSize: "10px" }}>
+                        ✅ {room.recommended_solution.materials[surface]?.name || "N/A"}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   };
@@ -842,6 +1114,92 @@ const Sustainability = () => {
             )}
           </div>
         </div>
+
+        {/* PART 2: ML MODEL ANALYSIS */}
+        <div style={{
+          backgroundColor: "#f0f4f8",
+          padding: "20px",
+          borderRadius: "12px",
+          border: "2px solid #93c5fd",
+          marginBottom: "25px"
+        }}>
+          <h5 style={{ marginTop: 0, color: "#1e40af", display: "flex", alignItems: "center", gap: "8px" }}>
+            🤖 Part 2: AI Sustainability Prediction
+          </h5>
+          <p style={{ color: "#666", fontSize: "13px", marginBottom: "15px" }}>
+            Use machine learning to predict material sustainability scores based on your selections and room data.
+          </p>
+
+          {mlSustainabilityScore ? (
+            <div>
+              {mlSustainabilityScore.summary ? (
+                <div>
+                  {/* Room-by-room analysis section is rendered separately below */}
+                  <div style={{
+                    backgroundColor: "#dcfce7",
+                    padding: "15px",
+                    borderRadius: "8px",
+                    marginBottom: "15px",
+                    border: "1px solid #86efac",
+                    textAlign: "center"
+                  }}>
+                    <p style={{ margin: "0 0 8px 0", fontSize: "13px", color: "#166534", fontWeight: "600" }}>
+                      ✅ Room-by-Room Analysis Complete
+                    </p>
+                    <p style={{ margin: "0", fontSize: "11px", color: "#166534" }}>
+                      See detailed recommendations below
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ color: "red", padding: "10px", backgroundColor: "#fee2e2", borderRadius: "6px" }}>
+                  Error: {mlSustainabilityScore.error || "Unknown error occurred"}
+                </div>
+              )}
+
+              <div style={{ display: "flex", gap: "10px", marginTop: "15px" }}>
+                <button
+                  onClick={() => {
+                    setMlSustainabilityScore(null);
+                  }}
+                  style={{
+                    padding: "8px 16px",
+                    borderRadius: "6px",
+                    border: "none",
+                    background: "#e5e7eb",
+                    color: "#374151",
+                    fontWeight: "600",
+                    cursor: "pointer",
+                    fontSize: "13px"
+                  }}
+                >
+                  Clear Results
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={analyzeWithMLModel}
+              disabled={mlAnalysisLoading}
+              style={{
+                padding: "12px 20px",
+                borderRadius: "8px",
+                border: "none",
+                background: mlAnalysisLoading ? "#d1d5db" : "#3b82f6",
+                color: "#fff",
+                fontWeight: "600",
+                cursor: mlAnalysisLoading ? "not-allowed" : "pointer",
+                fontSize: "14px",
+                width: "100%"
+              }}
+            >
+              {mlAnalysisLoading ? "⏳ Analyzing with AI..." : "🔍 Analyze Sustainability with ML Model"}
+            </button>
+          )}
+        </div>
+
+        {/* Room-by-room analysis */}
+        {renderRoomByRoomAnalysis()}
 
         <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
           <button 
