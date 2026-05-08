@@ -12,6 +12,8 @@ import unicodedata
 from collections import defaultdict
 from pathlib import Path
 
+from shapely import area
+
 # ─────────────────────────────────────────────
 # 0. LOAD CONFIG
 # ─────────────────────────────────────────────
@@ -53,7 +55,7 @@ def is_circulation(name):
 
 def get_building_bounds(dxf_path):
     doc = ezdxf.readfile(dxf_path)
-    msp = doc.modelspace()
+    msp = doc.modelspace() #modelspace da el makan ely fe actual gemotry gowa dxf    all_x, all_y = [], []
     all_x, all_y = [], []
 
     for e in msp:
@@ -252,7 +254,20 @@ def extract_windows(dxf_path, min_x, max_x, min_y, max_y, dedup, unit_scale, nor
     windows   = []
     seen_pos  = []
 
-    for e in msp:
+    # ── collect entities from BOTH modelspace AND the base block definition ──
+    def iter_entities():
+        yield from msp
+        base_block_name = next(
+            (e.dxf.name for e in msp
+             if e.dxftype() == "INSERT" and "BASE" in e.dxf.name.upper()
+             and "ORIGINAL" not in e.dxf.name.upper()),
+            None
+        )
+        if base_block_name and base_block_name in doc.blocks:
+            print(f"   📦 Also scanning block definition: {base_block_name!r}")
+            yield from doc.blocks[base_block_name]
+
+    for e in iter_entities():
         layer = e.dxf.layer if hasattr(e.dxf, 'layer') else ""
         if e.dxftype() in ("INSERT", "LWPOLYLINE", "POLYLINE"):
             if not is_real_window_layer(layer): continue
@@ -374,43 +389,49 @@ def assign_windows_to_rooms(windows, room_labels, unit_scale):
     valid_rooms  = [r for r in room_labels if r.get("x") is not None]
     room_windows = {r["name"]: [] for r in room_labels}
 
-    def d2(w, r):
+    def raw_dist(w, r):
         return math.hypot(w["x"] - r["x"], w["y"] - r["y"])
 
     pairs = sorted(
-        [(d2(w, r), w, r) for w in windows for r in valid_rooms],
+        [(raw_dist(w, r), w, r) for w in windows for r in valid_rooms],
         key=lambda t: t[0]
     )
 
     assigned_wids = set()
     room_count    = defaultdict(int)
 
+    # Max windows a room can receive = 1 per every 10m² (minimum 1)
+    def max_windows(area):
+        return max(1, round(area / 7.0))
+
+    # Phase 1: assign by nearest room, capped by area-based max
     for dist, w, r in pairs:
-        wid = id(w); rname = r["name"]; rarea = r.get("area_m2", 9.0)
-        if wid in assigned_wids: continue
-        if room_count[rname] >= 1 and rarea < MULTI_WINDOW_AREA_M2: continue
+        wid   = id(w)
+        rname = r["name"]
+        rarea = r.get("area_m2", 9.0)
+        if wid in assigned_wids:
+            continue
+        if room_count[rname] >= max_windows(rarea):
+            continue
         room_windows[rname].append(w)
-        assigned_wids.add(wid); room_count[rname] += 1
+        assigned_wids.add(wid)
+        room_count[rname] += 1
         print(f"   [P1] Win({w['x']:.3f},{w['y']:.3f}) dir={w['direction']}"
-              f" → {rname}  dist={dist:.3f}")
+              f" → {rname}  dist={dist:.3f}  cap={max_windows(rarea)}")
 
+    # Phase 2: anything unassigned → nearest room with remaining capacity
     for dist, w, r in pairs:
-        wid = id(w); rname = r["name"]; rarea = r.get("area_m2", 9.0)
-        if wid in assigned_wids: continue
-        if rarea < MULTI_WINDOW_AREA_M2: continue
+        wid   = id(w)
+        rname = r["name"]
+        if wid in assigned_wids:
+            continue
         room_windows[rname].append(w)
-        assigned_wids.add(wid); room_count[rname] += 1
-        print(f"   [P2-extra] Win({w['x']:.3f},{w['y']:.3f}) dir={w['direction']}"
+        assigned_wids.add(wid)
+        room_count[rname] += 1
+        print(f"   [P2] Win({w['x']:.3f},{w['y']:.3f}) dir={w['direction']}"
               f" → {rname}  dist={dist:.3f}")
-
-    for w in windows:
-        if id(w) not in assigned_wids:
-            print(f"   [unassigned] Win({w['x']:.3f},{w['y']:.3f})"
-                  f" dir={w['direction']} — not in any submitted room")
 
     return room_windows
-
-
 # ─────────────────────────────────────────────
 # 7. EXTRACT TEXT LABELS
 # ─────────────────────────────────────────────
@@ -534,7 +555,10 @@ def get_window_rating(window_dir, room_name):
     wd   = window_dir.upper()
     name = room_name.lower()
 
-    for room_type, rules in WINDOW_RATINGS.items():
+    # Longer keys first to avoid "master" matching before "master bathroom"
+    sorted_ratings = sorted(WINDOW_RATINGS.items(), key=lambda x: len(x[0]), reverse=True)
+
+    for room_type, rules in sorted_ratings:
         if room_type in name:
             if wd in rules.get("good", []):       return "good"
             if wd in rules.get("acceptable", []): return "acceptable"
@@ -546,6 +570,20 @@ def get_window_rating(window_dir, room_name):
 # ─────────────────────────────────────────────
 # 10. MAIN
 # ─────────────────────────────────────────────
+
+DIRECTION_PRIORITY = {
+    "bedroom": {"N": 0, "E": 1, "NE": 2, "S": 3, "SE": 4, "NW": 5, "SW": 6, "W": 7},
+    "master":  {"N": 0, "E": 1, "NE": 2, "S": 3, "SE": 4, "NW": 5, "SW": 6, "W": 7},
+    "service": {"S": 0, "SE": 1, "E": 2, "SW": 3, "W": 4, "NE": 5, "N": 6, "NW": 7},
+    "default": {"N": 0, "NE": 1, "S": 2, "E": 3, "SE": 4, "NW": 5, "SW": 6, "W": 7},
+}
+def get_room_priority(name: str) -> dict:
+    n = name.lower()
+    if any(w in n for w in ["bedroom", "master", "study"]):
+        return DIRECTION_PRIORITY["bedroom"]
+    if any(w in n for w in ["kitchen", "bathroom", "toilet", "wc", "laundry", "maid"]):
+        return DIRECTION_PRIORITY["service"]
+    return DIRECTION_PRIORITY["default"]
 
 def extract_features(dxf_path, city, north_arrow_direction, form_rooms):
     print(f"\n🔍 Parsing: {dxf_path}")
@@ -582,7 +620,10 @@ def extract_features(dxf_path, city, north_arrow_direction, form_rooms):
         area = float(room["area"])
         wins         = room_windows.get(name, [])
         win_dirs     = [w["direction"] for w in wins]
-        main_win_dir = max(set(win_dirs), key=win_dirs.count) if win_dirs else "none"
+        main_win_dir = (
+            min(win_dirs, key=lambda d: get_room_priority(name).get(d, 9))
+            if win_dirs else "none"
+        )
         orientation  = main_win_dir if main_win_dir != "none" else "unknown"
         win_rating   = get_window_rating(main_win_dir, name)
         window_dimensions = [
@@ -658,6 +699,7 @@ if __name__ == "__main__":
 
     features = extract_features(
         #dxf_path        = r"C:\Users\lenovo\Desktop\ecovision recommendation\rooms1.dxf",
+        #dxf_path        = r"C:\Users\lenovo\Desktop\ecovision recommendation\rooms1 final (4).dxf",
         dxf_path        = r"C:\Users\lenovo\Desktop\ecovision recommendation\basment final.dxf",
         city            = "Cairo",
         north_arrow_direction = "N",
@@ -666,6 +708,6 @@ if __name__ == "__main__":
 
     print("\n📋 Features:")
     print(json.dumps(features, indent=2))
-    with open("extracted_features_room.json", "w") as f:
+    with open(r"C:\Users\lenovo\Desktop\ecovision recommendation\results\basement final.json", "w") as f:
         json.dump(features, f, indent=2)
-    print("\n✅ Saved to extracted_features_room.json")
+    print("\n✅ Saved to basement final.json")
