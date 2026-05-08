@@ -1,5 +1,9 @@
 from sqlalchemy.orm import Session
 from app.models.user import User
+from app.models.activity_log import ActivityLog
+from app.models.project import Project
+from app.models.project_collab import ProjectCollaborator
+from app.models.project_access import ProjectAccess
 from app.schemas.user import UserCreate, UserUpdate
 from app.core.security import get_password_hash
 
@@ -53,6 +57,20 @@ def delete_user(db: Session, user_id: int):
     if not db_user:
         raise ValueError("User not found")
 
+    # Delete related records to avoid foreign key constraint violations
+    # 1. Delete all activity logs for this user
+    db.query(ActivityLog).filter(ActivityLog.user_id == user_id).delete()
+    
+    # 2. Delete all collaborations where user is a collaborator
+    db.query(ProjectCollaborator).filter(ProjectCollaborator.user_id == user_id).delete()
+    
+    # 3. Delete all access requests made by this user
+    db.query(ProjectAccess).filter(ProjectAccess.requester_id == user_id).delete()
+    
+    # 4. Delete all projects owned by this user (cascade will handle related floorplans, etc.)
+    db.query(Project).filter(Project.user_id == user_id).delete()
+    
+    # 5. Finally delete the user
     db.delete(db_user)
     db.commit()
     return db_user

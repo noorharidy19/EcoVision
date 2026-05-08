@@ -68,11 +68,26 @@ const AdminUsers: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    await fetch(`http://127.0.0.1:8000/admin/users/${id}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    fetchUsers();
+    if (!confirm("Are you sure you want to delete this user?")) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`http://127.0.0.1:8000/admin/users/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        alert(`Error deleting user: ${res.statusText}`);
+        return;
+      }
+
+      alert("User deleted successfully!");
+      fetchUsers();
+    } catch (error) {
+      alert(`Failed to delete user: ${error}`);
+    }
   };
 
   const handleEdit = (user: User) => {
