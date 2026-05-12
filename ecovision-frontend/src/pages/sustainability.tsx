@@ -117,6 +117,10 @@ const Sustainability = () => {
 
   const [visualScore, setVisualScore] = useState<any>(null);
 
+  const [visualRecs, setVisualRecs] = useState<any>(null);
+  const [visualRecsLoading, setVisualRecsLoading] = useState(false);
+  const [showVisualRecs, setShowVisualRecs] = useState(false);
+
   // Load project and floorplan data
   useEffect(() => {
     if (id && id !== "new" && id !== "undefined") {
@@ -256,6 +260,36 @@ const Sustainability = () => {
     setVisualLoading(false);
   }
 }; 
+
+const fetchVisualRecommendations = async () => {
+  if (!visualScore || !floorplan) return;
+
+  setVisualRecsLoading(true);
+  try {
+    const token = localStorage.getItem("token");
+    const response = await fetch(
+      "http://127.0.0.1:8000/analysis/visual/recommendations",
+      {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          analysis_result: visualScore,
+          floorplan_json: floorplan.json_data || {}
+        })
+      }
+    );
+    const data = await response.json();
+    setVisualRecs(data);
+    setShowVisualRecs(true);
+  } catch (err) {
+    setError("Failed to load recommendations");
+  } finally {
+    setVisualRecsLoading(false);
+  }
+};
 
   // Generate Sustainability recommendations
   const generateSustainabilityRecommendations = async () => {
@@ -894,11 +928,193 @@ const Sustainability = () => {
         ))}
       </div>
 
-      <button onClick={() => setMode("overview")}
-        style={{ padding: "10px 18px", borderRadius: "12px",
-          border: "none", background: "#d1fae5",
-          color: "#065f46", fontWeight: "600", cursor: "pointer" }}>
-        ← Back
+      {/* Show recommendations or the view recommendations button */}
+{showVisualRecs ? (
+  renderVisualRecommendations()
+) : (
+  <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
+    <button onClick={() => setMode("overview")}
+      style={{
+        padding: "10px 18px", borderRadius: "12px",
+        border: "none", background: "#d1fae5",
+        color: "#065f46", fontWeight: "600", cursor: "pointer"
+      }}>
+      ← Back
+    </button>
+    <button
+      onClick={fetchVisualRecommendations}
+      disabled={visualRecsLoading}
+      style={{
+        padding: "10px 24px", borderRadius: "12px",
+        border: "none",
+        background: visualRecsLoading ? "#ccc" : "#065f46",
+        color: "#fff", fontWeight: "600",
+        cursor: visualRecsLoading ? "not-allowed" : "pointer"
+      }}>
+      {visualRecsLoading ? "Loading..." : "✨ View Recommendations"}
+    </button>
+  </div>
+)}
+</div>
+  );
+};
+
+const renderVisualRecommendations = () => {
+  if (!visualRecs) return null;
+
+  const getScoreColor = (score: number) => {
+    if (score >= 67) return "#4ECDC4";
+    if (score >= 34) return "#f59e0b";
+    return "#ef4444";
+  };
+
+  return (
+    <div style={{ marginTop: "20px" }}>
+      <h4>✨ Visual Improvement Scenarios</h4>
+
+      {/* Main issue box */}
+      {visualRecs.has_recommendations && (
+        <div style={{
+          backgroundColor: "#fef9c3",
+          padding: "15px",
+          borderRadius: "8px",
+          border: "1px solid #fcd34d",
+          marginBottom: "16px"
+        }}>
+          <p style={{ margin: 0, fontWeight: "600", color: "#78350f" }}>
+            Main Issue: {visualRecs.main_issue}
+          </p>
+        </div>
+      )}
+
+      {/* No recommendations case */}
+      {!visualRecs.has_recommendations && (
+        <div style={{
+          backgroundColor: "#fce7e7",
+          padding: "15px",
+          borderRadius: "8px",
+          border: "1px solid #fca5a5",
+          marginBottom: "16px"
+        }}>
+          <p style={{ margin: 0, color: "#7f1d1d" }}>
+            {visualRecs.message}
+          </p>
+        </div>
+      )}
+
+      {/* Scenarios */}
+      {visualRecs.scenarios?.map((scenario: any, i: number) => (
+        <div key={i} style={{
+          backgroundColor: "#f0fdf4",
+          padding: "18px",
+          borderRadius: "10px",
+          border: "2px solid #86efac",
+          marginBottom: "14px"
+        }}>
+          <h5 style={{ marginTop: 0, color: "#166534" }}>
+            {i + 1}. {scenario.fix}
+          </h5>
+          <p style={{ color: "#374151", fontSize: "13px", marginBottom: "14px" }}>
+            {scenario.description}
+          </p>
+
+          {/* Score comparison */}
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "12px",
+            marginBottom: "12px"
+          }}>
+            <div style={{
+              backgroundColor: "#fff",
+              padding: "12px",
+              borderRadius: "8px",
+              textAlign: "center",
+              border: "1px solid #d1d5db"
+            }}>
+              <p style={{ margin: "0 0 4px 0", fontSize: "12px", color: "#6b7280" }}>
+                Current Score
+              </p>
+              <p style={{
+                margin: 0,
+                fontSize: "24px",
+                fontWeight: "bold",
+                color: getScoreColor(visualRecs.current_score)
+              }}>
+                {visualRecs.current_score.toFixed(1)}%
+              </p>
+              <p style={{ margin: "4px 0 0 0", fontSize: "12px", color: "#6b7280" }}>
+                {visualRecs.current_class}
+              </p>
+            </div>
+
+            <div style={{
+              backgroundColor: "#fff",
+              padding: "12px",
+              borderRadius: "8px",
+              textAlign: "center",
+              border: "2px solid #4ECDC4"
+            }}>
+              <p style={{ margin: "0 0 4px 0", fontSize: "12px", color: "#6b7280" }}>
+                Projected Score
+              </p>
+              <p style={{
+                margin: 0,
+                fontSize: "24px",
+                fontWeight: "bold",
+                color: getScoreColor(scenario.projected_score)
+              }}>
+                {scenario.projected_score.toFixed(1)}%
+              </p>
+              <p style={{ margin: "4px 0 0 0", fontSize: "12px", color: "#059669" }}>
+                +{scenario.score_change}% improvement
+              </p>
+            </div>
+          </div>
+
+          {/* Projected metrics */}
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(4, 1fr)",
+            gap: "8px",
+            fontSize: "11px"
+          }}>
+            {[
+              { label: "Lux", value: `${scenario.projected_lux} lux` },
+              { label: "DGI", value: scenario.projected_dgi },
+              { label: "CCT", value: `${scenario.projected_cct}K` },
+              { label: "View", value: `${scenario.projected_view}/100` }
+            ].map((m, j) => (
+              <div key={j} style={{
+                backgroundColor: "#ecfdf5",
+                padding: "8px",
+                borderRadius: "6px",
+                textAlign: "center"
+              }}>
+                <p style={{ margin: "0 0 2px 0", color: "#6b7280" }}>{m.label}</p>
+                <p style={{ margin: 0, fontWeight: "600", color: "#065f46" }}>
+                  {m.value}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      <button
+        onClick={() => setShowVisualRecs(false)}
+        style={{
+          padding: "10px 18px",
+          borderRadius: "12px",
+          border: "none",
+          background: "#d1fae5",
+          color: "#065f46",
+          fontWeight: "600",
+          cursor: "pointer",
+          marginTop: "8px"
+        }}
+      >
+        ← Back to Analysis
       </button>
     </div>
   );
