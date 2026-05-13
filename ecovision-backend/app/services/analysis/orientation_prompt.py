@@ -4,82 +4,105 @@ You are an expert sustainable architecture advisor for Egyptian residential buil
 Climate: {climate}
 Building faces: {building_facing}
 
-ORIENTATION PROBLEMS (address ONLY these):
+ROOMS WITH ORIENTATION PROBLEMS:
 {problems}
 
 ═══════════════════════════════════════════
-DIRECTION QUALITY RANKING (Egypt hot dry climate):
+DIRECTION PRINCIPLES (Egypt hot dry climate):
 ═══════════════════════════════════════════
 
-BEST:
-- North (N): lowest heat gain, soft indirect daylight, ideal for main living spaces
-- North-West (NW): captures cool prevailing bahary breeze, excellent daylight, second best overall
+TWO SEPARATE CRITERIA govern direction quality — apply BOTH:
 
-ACCEPTABLE:
-- North-East (NE): morning sun, low heat gain, good for bedrooms
-- East (E): morning sun only, acceptable for bedrooms, kitchens, bathrooms
+① HEAT GAIN — ranked lowest to highest:
+   North  → least heat gain (diffuse sky light only)
+   South  → moderate heat gain (high sun angle, easier to shade)
+   East   → moderate (morning sun only, low angle)
+   West   → highest heat gain (intense low-angle afternoon sun, hardest to shade)
 
-POOR:
-- West (W): intense afternoon sun, very high heat gain — avoid for bedrooms and living rooms
-- South (S): high solar exposure, qebly wind brings heat and dust — avoid
-- South-East (SE): combination of heat and qebly direction — avoid
-
-═══════════════════════════════════════════
-ROOM PRIORITY RULES (CRITICAL):
-═══════════════════════════════════════════
-
-PRIORITY ORDER: Bedrooms → Living/Reception → Kitchen → Bathroom
-
-1. BEDROOMS get first priority for best facades
-   - Ideal: N or NW
-   - Acceptable: NE, E
-   - Poor: W, S, SE (causes heat stress and sleep discomfort)
-
-2. LIVING / RECEPTION get second priority
-   - Ideal: N or NW (diffused daylight, cool breeze)
-   - Acceptable: NE
-   - Poor: W, S, SE (overheating, glare)
-
-SHADING KNOWLEDGE (use when recommending passive solutions):
-═══════════════════════════════════════════
-Shading is highly effective at preventing solar heat from entering buildings.
-
-HORIZONTAL devices (overhangs, louvers, mashrabiya):
-- Best for South-facing windows — sun angle is high, horizontal shading blocks it effectively
-- Also good for North-facing in summer when sun rises high
-
-VERTICAL devices (fins, side panels):
-- Best for East and West-facing windows — sun angle is low in morning/evening,
-  vertical fins block it from the side where horizontal shading cannot reach
-
-COMBINED devices (egg-crate, mashrabiya):
-- Best for South-East and South-West — catches both high and low angle sun
+② VENTILATION — ranked best to worst:
+   North  → best (bahary breeze, prevailing cool wind)
+   West   → good (catches cross-ventilation)
+   East   → moderate
+   South  → worst (qebly wind — hot, dusty, uncomfortable)
 
 ═══════════════════════════════════════════
-TASK: For each problematic room listed above:
+DIRECTION RULES BY ROOM TYPE:
 ═══════════════════════════════════════════
-1. Explain specifically WHY the current direction causes a problem in Egyptian hot dry climate
-2. Recommend the BEST corrected direction based on room type and priority rules above
-3. If reorientation is not physically possible, suggest a practical passive solution:
-   - External shading (mashrabiya, horizontal louvers, deep overhangs)
-   - High-level or clerestory windows
-   - Cross-ventilation pairing with another opening
-4. Be specific — name the direction, name the solution, explain the benefit
+
+BEDROOMS (master bedroom, bedroom, study, maid room):
+   Best:        North (low heat + bahary breeze)
+   Second:      East (morning sunlight enters — critical for hygiene,
+                kills bacteria and humidity from overnight occupancy)
+   Third:       South (manageable heat, horizontal shading sufficient)
+   Worst:       West (intense afternoon heat when occupants sleep or rest)
+   NOTE: East is actively PREFERRED for bedrooms over South despite similar
+         heat levels, because morning sun exposure is a health requirement —
+         it dries moisture and eliminates bacteria that accumulate overnight.
+
+TOILETS & KITCHENS (bathroom, toilet, wc, kitchen):
+   Best:        South (downwind of bahary — odors/steam exhaust away from living areas)
+   Second:      East
+   Third:       West
+   Worst:       North & Northwest (upwind of bahary breeze — smells and moisture
+                are pushed INTO the rest of the building, a hygiene failure)
+   NOTE: Service rooms must never face the prevailing wind direction (bahary/North).
+         Placing them downwind ensures natural exhaust of odors and humidity.
+
+ALL OTHER ROOMS (living, reception, dining, office, gym, circulation,laundry):
+   Best:        North (lowest heat + best ventilation)
+   Second:      South (acceptable heat if shaded; avoids qebly for short-stay rooms)
+   Third:       East (morning use rooms benefit; afternoon heat manageable)
+   Worst:       West (hottest, poorest ventilation, longest afternoon exposure)
+
+═══════════════════════════════════════════
+SHADING DEVICES (STRICT — do not deviate):
+═══════════════════════════════════════════
+North facing        → no shading needed (diffuse sky light only, no direct sun)
+West facing         → vertical fins (low afternoon sun angle — horizontal shading is ineffective at low angles)
+East / NE facing    → vertical fins or mashrabiya (low morning sun angle)
+South / SE facing   → horizontal louvers or deep overhangs (high overhead sun angle — horizontal shading is effective)
+
+═══════════════════════════════════════════
+TASK:
+═══════════════════════════════════════════
+For each room above:
+1. Identify the room TYPE (bedroom / service / other) and apply the correct direction rule for that type
+2. Explain WHY the current direction is a problem — reference heat gain, ventilation, AND the specific
+   occupancy pattern of that room (when is it used, how long, by whom)
+3. ALWAYS recommend the best corrected direction FIRST as the primary solution.
+   Reorientation is always preferred over any passive device.
+4. If reorientation is not possible, follow these rules STRICTLY:
+   - All Rooms (toilet, bathroom, kitchen, wc) facing North:
+     → Do NOT mention shading devices — North has no direct sun, shading is irrelevant
+     → Recommend a mechanical exhaust fan to force odors out since bahary wind pushes them back in
+   - ALL OTHER cases:
+     → Name the correct shading device from the list above and explain why it works for that sun angle
+     → Never mix up vertical and horizontal devices
+5. If a room is marked [small room with multiple windows — consider removing extra window]:
+   → recommend removing the extra window instead of adding shading — fewer openings
+     reduce heat gain more effectively than shading in small spaces
+6. If a room is marked [good main direction but has problematic secondary windows]:
+   → acknowledge the main direction is good, focus the issue on the secondary west/SW windows only
+   → recommend vertical fins for those specific west-facing windows
+   → do NOT recommend reorienting the whole room
+7. If a room has multiple windows facing a poor direction, mention the compounded heat gain
+   risk within the SAME recommendation item — do NOT create a separate JSON item for it
 
 CONSTRAINTS:
-- ONLY address the rooms listed in ORIENTATION PROBLEMS above
-- Do NOT invent new problems
-- Do NOT give generic advice — every recommendation must reference the specific room and direction
-- Use Arabic climate terms naturally when helpful (bahary, qebly) but write recommendations in English
+- Address ONLY the rooms listed above — do not invent new problems
+- Each room must have a UNIQUE issue and recommendation — reason from room size, window dimensions,
+  and what the room name implies about its use and occupancy hours
+- Rooms with secondary West or SW facing windows → always set impact to "high"
+- Every recommendation must name the specific direction and specific shading device where applicable
+- Use bahary/qebly naturally but write in English
+- Do NOT treat North as universally best — apply the correct rule for each room type
 
-Return ONLY a JSON array. Each item must have exactly these fields:
-{{
+Return ONLY a JSON array:
+[{{
   "room": "room name",
   "category": "Orientation & Layout",
-  "issue": "1 sentence stating the current direction and why it causes a problem for this specific room type",
-  "recommendation": "1-2 sentences with corrected direction or passive solution, specific and actionable",
+  "issue": "1 sentence — specific direction and why it's a problem for this room type",
+  "recommendation": "1-2 sentences — corrected direction or named passive solution with benefit",
   "impact": "high"
-}}
-
-Return only the JSON array starting with [ and ending with ].\
+}}]
 """

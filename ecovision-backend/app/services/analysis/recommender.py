@@ -6,12 +6,11 @@ Mistral → Orientation & Layout recommendations (natural language)
 
 All configuration loaded from config.json — no hard-coded data.
 """
-
-import ollama
+from groq import Groq
 import json
 from pathlib import Path
-from .orientation_prompt import ORIENTATION_PROMPT
-from .space_geometry_prompt import SPACE_GEOMETRY_PROMPT
+from orientation_prompt import ORIENTATION_PROMPT
+from space_geometry_prompt import SPACE_GEOMETRY_PROMPT
 
 # ─────────────────────────────────────────────
 # 0. LOAD CONFIG + PROMPT TEMPLATE
@@ -27,7 +26,8 @@ LARGE_ROOM_M2    = CFG["thresholds"]["large_room_area_m2"]
 SERVICE_ROOMS    = CFG["room_categories"]["service"]
 LLM_MODEL        = CFG["llm"]["model"]
 LLM_TEMPERATURE  = CFG["llm"]["temperature"]
-LLM_TOP_P        = CFG["llm"]["top_p"]
+GROQ_API_KEY     = CFG["llm"]["groq_api_key"]
+_groq_client = Groq(api_key=GROQ_API_KEY)
 
 
 # ─────────────────────────────────────────────
@@ -62,8 +62,50 @@ def detect_space_problems(features: dict) -> list:
             problems.append({
                 "room":    r["name"],
                 "type":    "large_room",
-                "details": f"{r['name']} is {r['area_m2']}m², above the {LARGE_ROOM_M2}m² threshold for efficient thermal zoning.",
+                "details": f"{r['name']} is {r['area_m2']}m², significantly above the {LARGE_ROOM_M2}m² threshold — "
+                        f"large undivided spaces are hard to thermally zone and ventilate efficiently in hot dry climates.",
             })
+    
+        valid_dims = [w for w in r["window_dimensions"] if w["width_mm"] and w["height_mm"]]
+        if r["is_high_use"] and valid_dims:
+            total_win_area = sum(
+                (w["width_mm"] / 1000) * (w["height_mm"] / 1000)
+                for w in valid_dims
+            )
+            total_ratio = total_win_area / r["area_m2"]
+            if total_ratio < 0.10:
+                target_area = r["area_m2"] * 0.10
+                problems.append({
+                    "room": r["name"],
+                    "type": "small_window",
+                    "details": (
+                        f"{r['name']} window-to-floor ratio is {total_ratio:.0%} "
+                        f"({len(valid_dims)} window(s), {total_win_area:.2f}m² total "
+                        f"out of {r['area_m2']}m² room area), below the 10% minimum. "
+                        f"The target window area is {target_area:.2f}m² — "  # ← explicit label
+                        f"currently missing {target_area - total_win_area:.2f}m²."  # ← gap also given
+                    )
+                })
+
+    # Your current code only catches "poor", missing "no_window" rooms
+        if r["window_direction_rating"] == "no_window" and r["is_high_use"]:
+            problems.append({
+                "room":    r["name"],
+                "type":    "no_window",
+                "details": f"{r['name']} ({r['area_m2']}m²) has no window — "
+                        f"zero natural light and ventilation in a high-use room "
+                        f"in hot dry Cairo climate is a critical thermal comfort issue."
+            })
+
+
+    # You have total_windows and num_rooms sitting unused
+    window_per_room = features["total_windows"] / features["num_rooms"]
+    if window_per_room < 0.7:
+        problems.append({
+            "room": "Building",
+            "type": "low_window_coverage",
+            "details": f"Building averages only {window_per_room:.1f} windows per room — insufficient natural ventilation overall."
+        })
 
     return problems
 
@@ -81,8 +123,18 @@ def build_space_prompt(features: dict, problems: list) -> str | None:
         total_floor_area_m2 = features["total_floor_area_m2"],
         problems            = problems_str,
         num_problems        = len(problems),
+        large_room_threshold = LARGE_ROOM_M2,
     )
 
+def normalize_impact(impact: str) -> str:
+    impact = impact.lower().strip()
+    if impact in ["moderate", "med"]:
+        return "medium"
+    if impact in ["critical", "severe"]:
+        return "high"
+    if impact in ["minor", "minimal"]:
+        return "low"
+    return impact if impact in ["high", "medium", "low"] else "medium"
 
 def validate_space_recs(recs: list, problems: list) -> list:
     """
@@ -98,7 +150,9 @@ def validate_space_recs(recs: list, problems: list) -> list:
     for p in problems:
         if p["type"] == "corridor":
             allowed.add("building")
-        elif p["type"] == "large_room":
+        elif p["type"] == "low_window_coverage":
+            allowed.add("building")
+        else:
             allowed.add(p["room"].lower())
 
     validated = []
@@ -114,6 +168,17 @@ def validate_space_recs(recs: list, problems: list) -> list:
     return validated
 
 
+def call_llm(system_prompt: str, user_prompt: str) -> str:
+    response = _groq_client.chat.completions.create(
+        model=LLM_MODEL,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user",   "content": user_prompt}
+        ],
+        temperature=LLM_TEMPERATURE,
+    )
+    return response.choices[0].message.content.strip()
+
 def get_space_recommendations(features: dict, model: str = None) -> list:
     model    = model or LLM_MODEL
     problems = detect_space_problems(features)
@@ -127,22 +192,10 @@ def get_space_recommendations(features: dict, model: str = None) -> list:
     print("─" * 50)
 
     try:
-        response = ollama.chat(
-            model=model,
-            messages=[
-                {
-                    "role": "system",
-                    "content": "You are a sustainable architecture expert. Respond with valid JSON only. Never include text outside the JSON array."
-                },
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ],
-            options={"temperature": LLM_TEMPERATURE, "top_p": LLM_TOP_P}
+        raw = call_llm(
+            system_prompt="You are a sustainable architecture expert. Respond with valid JSON only. Never include text outside the JSON array.",
+            user_prompt=prompt
         )
-
-        raw = response["message"]["content"].strip()
         print(f"📨 Raw LLM response:\n{raw}\n")
         print("─" * 50)
         recs = parse_response(raw, label="space & geometry")
@@ -150,7 +203,7 @@ def get_space_recommendations(features: dict, model: str = None) -> list:
         return recs
 
     except Exception as e:
-        print(f"❌ Ollama error (space): {e}")
+        print(f"❌ Groq error (space): {e}")
         return []
 
 
@@ -158,30 +211,100 @@ def get_space_recommendations(features: dict, model: str = None) -> list:
 # 2. ORIENTATION & LAYOUT (LLM)
 # ─────────────────────────────────────────────
 
-def build_prompt(features: dict) -> str | None:
-    """Fill orientation_prompt.txt with runtime values. Returns None if no problems."""
+# ─────────────────────────────────────────────
+# REPLACE your existing build_prompt() with this
+# ─────────────────────────────────────────────
 
+def build_prompt(features: dict) -> str | None:
+
+    def room_line(r, note=""):
+        dirs = r["all_window_directions"]
+        secondary = [d for d in dirs if d != r["window_direction"]]
+        base = (
+            f"- {r['name']}: main window faces {r['window_direction']}"
+            + (f", also has windows facing {', '.join(secondary)}" if secondary else "")
+            + f", area {r['area_m2']}m², {r['window_count']} window(s)"
+        )
+        if r["window_dimensions"]:
+            base += f", {r['window_dimensions'][0]['width_mm']}mm wide"
+        if note:
+            base += f" [{note}]"
+        return base
+
+    # 1. Rooms with poor main direction
     poor_rooms = [
         r for r in features["rooms"]
         if r.get("window_direction_rating") == "poor"
-        and r["is_high_use"]
-        and not is_service_room(r["name"])
+        and not r["is_circulation"]
     ]
 
-    if not poor_rooms:
-        return None
+    # 2. Rooms with good/acceptable main direction BUT bad secondary windows (W or SW)
+    mixed_rooms = [
+        r for r in features["rooms"]
+        if r["window_direction_rating"] in ["good", "acceptable"]
+        and len(r["all_window_directions"]) > 1
+        and any(d in ["W", "SW"] for d in r["all_window_directions"])
+        and r["window_direction"] not in ["W", "SW"]
+        and not r["is_circulation"]
+    ]
 
-    problems = "\n".join([
-        f"- {r['name']} window faces {r['window_direction']} → excessive heat gain in hot dry climate"
-        for r in poor_rooms
-    ])
+    # 3. Small rooms (<15m²) with more than 1 window — regardless of rating
+    overcrowded_rooms = [
+        r for r in features["rooms"]
+        if r["area_m2"] < 15
+        and r["window_count"] > 1
+        and not r["is_circulation"]
+    ]
 
-    return ORIENTATION_PROMPT.format(
-        climate        = features["climate"].replace("_", " "),
-        building_facing= features["north_arrow_direction"],
-        problems       = problems,
+    already_flagged = (
+        {r["name"] for r in poor_rooms} |
+        {r["name"] for r in mixed_rooms}
     )
 
+    # Only add overcrowded rooms not already flagged by poor or mixed
+    overcrowded_only = [
+        r for r in overcrowded_rooms
+        if r["name"] not in already_flagged
+    ]
+
+    if not poor_rooms and not mixed_rooms and not overcrowded_only:
+        return None
+
+    problems_lines = (
+        [room_line(r) for r in poor_rooms] +
+        [room_line(r, note="good main direction but has problematic secondary windows") for r in mixed_rooms if r["name"] not in {x["name"] for x in poor_rooms}] +
+        [room_line(r, note="small room with multiple windows — consider removing extra window") for r in overcrowded_only]
+    )
+
+    problems = "\n".join(problems_lines)
+
+    return ORIENTATION_PROMPT.format(
+        climate         = features["climate"].replace("_", " "),
+        building_facing = features["north_arrow_direction"],
+        problems        = problems,
+    )
+
+VALID_CATEGORIES = {"Orientation & Layout", "Space & Geometry"}
+
+def validate_orientation_recs(recs: list, features: dict) -> list:
+    actual_rooms = {r["name"].lower() for r in features["rooms"]}
+    actual_rooms.add("building")
+
+    validated = []
+    for rec in recs:
+        room_key = rec.get("room", "").lower()
+        category = rec.get("category", "")
+        
+        if category not in VALID_CATEGORIES:
+            print(f"   🚫 Invalid category removed: '{category}' for room '{rec.get('room')}'")
+            continue
+        if room_key not in actual_rooms:
+            print(f"   🚫 Hallucinated room removed: '{rec.get('room')}'")
+            continue
+        validated.append(rec)
+
+    print(f"   ✅ Orientation validation: {len(validated)}/{len(recs)} items kept")
+    return validated
 
 def get_orientation_recommendations(features: dict, model: str = None) -> list:
     model  = model or LLM_MODEL
@@ -190,32 +313,22 @@ def get_orientation_recommendations(features: dict, model: str = None) -> list:
         print("✅ No orientation problems — skipping LLM")
         return []
 
-    print(f"\n🤖 Sending to {model}...")
+    print(f"\n🤖 Sending to {LLM_MODEL}...")
     print("─" * 50)
 
     try:
-        response = ollama.chat(
-            model=model,
-            messages=[
-                {
-                    "role": "system",
-                    "content": "You are a sustainable architecture expert. Respond with valid JSON only. Never include text outside the JSON array."
-                },
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ],
-            options={"temperature": LLM_TEMPERATURE, "top_p": LLM_TOP_P}
+        raw = call_llm(
+            system_prompt="You are a sustainable architecture expert. Respond with valid JSON only. Never include text outside the JSON array.",
+            user_prompt=prompt
         )
-
-        raw = response["message"]["content"].strip()
         print(f"📨 Raw LLM response:\n{raw}\n")
         print("─" * 50)
-        return parse_response(raw, label="orientation")
+        recs = parse_response(raw, label="orientation")
+        recs = validate_orientation_recs(recs, features)
+        return recs
 
     except Exception as e:
-        print(f"❌ Ollama error: {e}")
+        print(f"❌ Groq error: {e}")
         return []
 
 
@@ -238,7 +351,12 @@ def parse_response(raw: str, label: str = "orientation") -> list:
 
     try:
         recs = json.loads(raw[start:end])
-        print(f"✅ Parsed {len(recs)} {label} recommendations")
+        for rec in recs:
+            for key in ["issue", "recommendation"]:
+                if key in rec:
+                    rec[key] = " ".join(rec[key].split())
+        for rec in recs:
+            rec["impact"] = normalize_impact(rec.get("impact", "medium"))
         return recs
     except json.JSONDecodeError as e:
         print(f"❌ JSON parse error ({label}): {e}")
@@ -256,7 +374,7 @@ def deduplicate(recommendations: list) -> list:
         if r.get("category") == "Orientation & Layout"
     }
 
-    return [
+    recs = [
         r for r in recommendations
         if not (
             r.get("category") == "Space & Geometry"
@@ -264,6 +382,17 @@ def deduplicate(recommendations: list) -> list:
             and "window faces" in r.get("issue", "")
         )
     ]
+    # NEW — remove same-room same-category duplicates
+    seen = set()
+    deduped = []
+    for r in recs:
+        key = (r["room"], r["category"])
+        if key not in seen:
+            seen.add(key)
+            deduped.append(r)
+        else:
+            print(f"   🚫 Duplicate removed: {r['room']} / {r['category']}")
+    return deduped
 
 
 # ─────────────────────────────────────────────
@@ -336,17 +465,17 @@ def run_pipeline(features: dict, model: str = None) -> dict:
 
 if __name__ == "__main__":
     try:
-        with open("C:\\Users\\lenovo\\Desktop\\ecovision recommendation\\final recommendation\\extracted_features_room.json", "r") as f:
+        with open(r"C:\Users\lenovo\Desktop\ecovision recommendation\results\basement final (added windows).json", "r", encoding="utf-8") as f:
             features = json.load(f)
-        print("✅ Loaded extracted_features_room.json")
+        print("✅ Loaded basement final (added windows).json")
     except FileNotFoundError:
-        print("❌ Run dxf_parser.py first to generate extracted_features_room.json")
+        print("❌ Run dxf_parser.py first to generate basement final (added windows).json")
         exit(1)
 
     result = run_pipeline(features)
 
     print(result["formatted"])
 
-    with open("recommendations.json", "w") as f:
-        json.dump(result["recommendations"], f, indent=2)
-    print(f"✅ Saved {result['total']} recommendations to recommendations.json")
+    with open(r"C:\Users\lenovo\Desktop\ecovision recommendation\results\recommendations basement final (added windows).json", "w",encoding="utf-8") as f:
+        json.dump(result["recommendations"], f, indent=2, ensure_ascii=False)
+    print(f"✅ Saved {result['total']} recommendations to recommendations basement final (added windows).json")

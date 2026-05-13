@@ -13,7 +13,7 @@ CONTEXT:
 ═══════════════════════════════════════════
 - Climate is {climate} — thermal efficiency and minimizing conditioned space waste is critical
 - Corridor and circulation spaces above 15% of total floor area waste energy on non-habitable zones
-- Rooms above 45m² are thermally inefficient in hot dry climates — large volumes heat up quickly
+- - Rooms above {large_room_threshold}m² are thermally inefficient in hot dry climates — large volumes heat up quickly
   and require more energy to cool
 
 ═══════════════════════════════════════════
