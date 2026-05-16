@@ -5,6 +5,7 @@ Generates sustainability recommendations based on floorplan JSON data
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import flag_modified
 from app.core.database import get_db
 from app.services.auth_service import get_current_user
 from app.models.user import User
@@ -22,6 +23,13 @@ router = APIRouter(prefix="/recommendations", tags=["Recommendations"])
 class RecommendationRequest(BaseModel):
     """Request body for generating recommendations"""
     floorplan_id: int
+
+
+class RoomDirectionUpdate(BaseModel):
+    """Request body for saving user-selected room orientation"""
+    floorplan_id: int
+    room_name: str
+    orientation: str
 
 
 @router.post("/generate")
@@ -225,3 +233,127 @@ async def generate_explanation(
             status_code=500,
             detail=f"Explanation generation failed: {str(e)}"
         )
+
+
+@router.post("/rooms/explanations")
+async def get_room_explanations(
+    request: RecommendationRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Return room-by-room explanations with current orientation data."""
+    try:
+        floorplan = db.query(Floorplan).filter(
+            Floorplan.id == request.floorplan_id
+        ).first()
+
+        if not floorplan:
+            raise HTTPException(status_code=404, detail="Floorplan not found")
+
+        project = floorplan.project
+        if project.user_id != current_user.id:
+            raise HTTPException(status_code=403, detail="Unauthorized")
+
+        features = floorplan.json_data or {}
+        rooms = features.get("rooms", [])
+
+        room_explanations = []
+        for room in rooms:
+            room_name = room.get("name", "Unknown Room")
+            area = room.get("area_m2", 0)
+            window_directions = room.get("window_directions", [])
+            orientation = (
+                room.get("orientation")
+                or room.get("primary_direction")
+                or (window_directions[0] if window_directions else "unknown")
+            )
+
+            if window_directions:
+                exp = (
+                    f"{room_name} is around {area} m2. Windows face {', '.join(window_directions)}. "
+                    f"Current orientation is {orientation}."
+                )
+            else:
+                exp = (
+                    f"{room_name} is around {area} m2 with no mapped windows. "
+                    f"Current orientation is {orientation}."
+                )
+
+            room_explanations.append({
+                "room_name": room_name,
+                "area_m2": area,
+                "window_directions": window_directions,
+                "current_orientation": orientation,
+                "explanation": exp,
+                "can_edit": True,
+            })
+
+        return {
+            "status": "success",
+            "floorplan_id": request.floorplan_id,
+            "rooms": room_explanations,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Room explanation error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get room explanations: {str(e)}")
+
+
+@router.post("/rooms/update-orientation")
+async def update_room_orientation(
+    request: RoomDirectionUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Update one room orientation in floorplan.json_data and persist it."""
+    try:
+        orientation = request.orientation.strip().upper()
+        valid = {"N", "S", "E", "W", "NE", "NW", "SE", "SW", "UNKNOWN"}
+        if orientation not in valid:
+            raise HTTPException(status_code=400, detail="Invalid orientation")
+
+        floorplan = db.query(Floorplan).filter(
+            Floorplan.id == request.floorplan_id
+        ).first()
+
+        if not floorplan:
+            raise HTTPException(status_code=404, detail="Floorplan not found")
+
+        project = floorplan.project
+        if project.user_id != current_user.id:
+            raise HTTPException(status_code=403, detail="Unauthorized")
+
+        features = floorplan.json_data or {}
+        rooms = features.get("rooms", [])
+
+        target_found = False
+        for room in rooms:
+            if room.get("name") == request.room_name:
+                room["orientation"] = orientation
+                # Keep backward compatibility with existing room direction usage.
+                room["primary_direction"] = orientation
+                room["user_edited_orientation"] = True
+                target_found = True
+                break
+
+        if not target_found:
+            raise HTTPException(status_code=404, detail="Room not found")
+
+        floorplan.json_data = features
+        flag_modified(floorplan, "json_data")
+        db.add(floorplan)
+        db.commit()
+
+        return {
+            "status": "success",
+            "message": "Room orientation updated",
+            "room_name": request.room_name,
+            "orientation": orientation,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        logger.error(f"❌ Update room orientation error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to update orientation: {str(e)}")

@@ -121,6 +121,10 @@ const Sustainability = () => {
   const [visualRecsLoading, setVisualRecsLoading] = useState(false);
   const [showVisualRecs, setShowVisualRecs] = useState(false);
 
+  const [thermalScenarios, setThermalScenarios] = useState<any>(null);
+  const [thermalScenariosLoading, setThermalScenariosLoading] = useState(false);
+  const [showThermalScenarios, setShowThermalScenarios] = useState(false);
+
   // Load project and floorplan data
   useEffect(() => {
     if (id && id !== "new" && id !== "undefined") {
@@ -417,6 +421,36 @@ const fetchVisualRecommendations = async () => {
       setError(err instanceof Error ? err.message : "Failed to calculate thermal score");
     } finally {
       setThermalScoreLoading(false);
+    }
+  };
+
+  const fetchThermalRecommendations = async () => {
+    if (!thermalScore || !floorplan) return;
+
+    setThermalScenariosLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        "http://127.0.0.1:8000/analysis/thermal/recommendations",
+        {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            analysis_result: thermalScore,
+            floorplan_json: floorplan.json_data || {}
+          })
+        }
+      );
+      const data = await response.json();
+      setThermalScenarios(data);
+      setShowThermalScenarios(true);
+    } catch (err) {
+      setError("Failed to load thermal recommendations");
+    } finally {
+      setThermalScenariosLoading(false);
     }
   };
 
@@ -718,40 +752,61 @@ const fetchVisualRecommendations = async () => {
               </p>
             </div>
 
-
-            <div style={{ display: "flex", gap: "10px" }}>
-              <button 
-                onClick={() => {
-                  setThermalScore(null);
-                  setMode('overview');
-                }} 
-                style={{ 
-                  padding: "10px 18px", 
-                  borderRadius: "12px", 
-                  border: "none", 
-                  background: "#d1fae5", 
-                  color: "#065f46", 
-                  fontWeight: "600", 
-                  cursor: "pointer" 
-                }}
-              >
-                ← Back
-              </button>
-              <button 
-                onClick={() => setMode('material')} 
-                style={{ 
-                  padding: "10px 18px", 
-                  borderRadius: "12px", 
-                  border: "none", 
-                  background: "#FFB84D", 
-                  color: "#000", 
-                  fontWeight: "600", 
-                  cursor: "pointer" 
-                }}
-              >
-                🏗️ Modify Materials
-              </button>
-            </div>
+            {/* Show recommendations or the view recommendations button */}
+            {showThermalScenarios ? (
+              renderThermalRecommendations()
+            ) : (
+              <div style={{ display: "flex", gap: "10px" }}>
+                <button 
+                  onClick={() => {
+                    setThermalScore(null);
+                    setShowThermalScenarios(false);
+                    setMode('overview');
+                  }} 
+                  style={{ 
+                    padding: "10px 18px", 
+                    borderRadius: "12px", 
+                    border: "none", 
+                    background: "#d1fae5", 
+                    color: "#065f46", 
+                    fontWeight: "600", 
+                    cursor: "pointer" 
+                  }}
+                >
+                  ← Back
+                </button>
+                <button 
+                  onClick={fetchThermalRecommendations}
+                  disabled={thermalScenariosLoading}
+                  style={{ 
+                    padding: "10px 24px", 
+                    borderRadius: "12px", 
+                    border: "none",
+                    background: thermalScenariosLoading ? "#ccc" : "#065f46",
+                    color: "#fff", 
+                    fontWeight: "600", 
+                    cursor: thermalScenariosLoading ? "not-allowed" : "pointer"
+                  }}
+                >
+                  {thermalScenariosLoading ? "Loading..." : "🌡️ View Improvement Scenarios"}
+                </button>
+                <button 
+                  onClick={() => setMode('material')} 
+                  style={{ 
+                    padding: "10px 18px", 
+                    borderRadius: "12px", 
+                    border: "none", 
+                    background: "#FFB84D", 
+                    color: "#000", 
+                    fontWeight: "600", 
+                    cursor: "pointer",
+                    marginLeft: "auto"
+                  }}
+                >
+                  🏗️ Modify Materials
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           <div style={{
@@ -798,6 +853,170 @@ const fetchVisualRecommendations = async () => {
             </button>
           </div>
         )}
+      </div>
+    );
+  };
+
+  const renderThermalRecommendations = () => {
+    if (!thermalScenarios) return null;
+
+    const getScoreColor = (score: number) => {
+      if (score >= 70) return "#10b981";
+      if (score >= 50) return "#f59e0b";
+      return "#ef4444";
+    };
+
+    return (
+      <div style={{ marginTop: "20px" }}>
+        <h4>🌡️ Thermal Improvement Scenarios</h4>
+
+        {/* Main issue box */}
+        {thermalScenarios.has_recommendations && (
+          <div style={{
+            backgroundColor: "#fef9c3",
+            padding: "15px",
+            borderRadius: "8px",
+            border: "1px solid #fcd34d",
+            marginBottom: "16px"
+          }}>
+            <p style={{ margin: 0, fontWeight: "600", color: "#78350f" }}>
+              Main Issue: {thermalScenarios.main_issue}
+            </p>
+          </div>
+        )}
+
+        {/* No recommendations case */}
+        {!thermalScenarios.has_recommendations && (
+          <div style={{
+            backgroundColor: "#fce7e7",
+            padding: "15px",
+            borderRadius: "8px",
+            border: "1px solid #fca5a5",
+            marginBottom: "16px"
+          }}>
+            <p style={{ margin: 0, color: "#7f1d1d" }}>
+              {thermalScenarios.message}
+            </p>
+          </div>
+        )}
+
+        {/* Scenarios */}
+        {thermalScenarios.scenarios?.map((scenario: any, i: number) => (
+          <div key={i} style={{
+            backgroundColor: "#f0fdf4",
+            padding: "18px",
+            borderRadius: "10px",
+            border: "2px solid #86efac",
+            marginBottom: "14px"
+          }}>
+            <h5 style={{ marginTop: 0, color: "#166534" }}>
+              {i + 1}. {scenario.design_action}
+            </h5>
+            <p style={{ color: "#374151", fontSize: "13px", marginBottom: "14px" }}>
+              {scenario.description}
+            </p>
+            <p style={{ color: "#666", fontSize: "12px", marginBottom: "14px", fontStyle: "italic" }}>
+              {scenario.why_it_helps}
+            </p>
+
+            {/* Score comparison */}
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "12px",
+              marginBottom: "12px"
+            }}>
+              <div style={{
+                backgroundColor: "#fff",
+                padding: "12px",
+                borderRadius: "8px",
+                textAlign: "center",
+                border: "1px solid #d1d5db"
+              }}>
+                <p style={{ margin: "0 0 4px 0", fontSize: "12px", color: "#6b7280" }}>
+                  Current Score
+                </p>
+                <p style={{
+                  margin: 0,
+                  fontSize: "24px",
+                  fontWeight: "bold",
+                  color: getScoreColor(thermalScore?.comfort_score || 0)
+                }}>
+                  {(thermalScore?.comfort_score || 0).toFixed(1)}%
+                </p>
+                <p style={{ margin: "4px 0 0 0", fontSize: "12px", color: "#6b7280" }}>
+                  {thermalScore?.comfort_class}
+                </p>
+              </div>
+
+              <div style={{
+                backgroundColor: "#fff",
+                padding: "12px",
+                borderRadius: "8px",
+                textAlign: "center",
+                border: "2px solid #10b981"
+              }}>
+                <p style={{ margin: "0 0 4px 0", fontSize: "12px", color: "#6b7280" }}>
+                  Projected Score
+                </p>
+                <p style={{
+                  margin: 0,
+                  fontSize: "24px",
+                  fontWeight: "bold",
+                  color: getScoreColor(scenario.projected_score)
+                }}>
+                  {scenario.projected_score.toFixed(1)}%
+                </p>
+                <p style={{ margin: "4px 0 0 0", fontSize: "12px", color: "#059669" }}>
+                  +{(scenario.projected_score - (thermalScore?.comfort_score || 0)).toFixed(1)}% improvement
+                </p>
+              </div>
+            </div>
+
+            {/* Projected metrics */}
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(4, 1fr)",
+              gap: "8px",
+              fontSize: "11px"
+            }}>
+              {[
+                { label: "PMV", value: scenario.projected_pmv },
+                { label: "PPD", value: `${scenario.projected_ppd}%` },
+                { label: "Tdb", value: `${scenario.projected_tdb}°C` },
+                { label: "Tr", value: `${scenario.projected_tr}°C` }
+              ].map((m, j) => (
+                <div key={j} style={{
+                  backgroundColor: "#ecfdf5",
+                  padding: "8px",
+                  borderRadius: "6px",
+                  textAlign: "center"
+                }}>
+                  <p style={{ margin: "0 0 2px 0", color: "#6b7280" }}>{m.label}</p>
+                  <p style={{ margin: 0, fontWeight: "600", color: "#065f46" }}>
+                    {m.value}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+
+        <button
+          onClick={() => setShowThermalScenarios(false)}
+          style={{
+            padding: "10px 18px",
+            borderRadius: "12px",
+            border: "none",
+            background: "#d1fae5",
+            color: "#065f46",
+            fontWeight: "600",
+            cursor: "pointer",
+            marginTop: "8px"
+          }}
+        >
+          ← Back to Analysis
+        </button>
       </div>
     );
   };

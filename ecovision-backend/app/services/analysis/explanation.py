@@ -59,6 +59,11 @@ def _build_room_lines(features: dict) -> str:
         rating     = r["window_direction_rating"]
         all_dirs   = r.get("all_window_directions", [])
         primary    = all_dirs[0].upper() if all_dirs else "NONE"
+        
+        # If user has edited the orientation, use that instead of auto-detected
+        user_orientation = r.get("orientation")
+        if user_orientation and user_orientation != "UNKNOWN":
+            primary = user_orientation.upper()
 
         # ── Exact per-direction counts (no LLM collapsing) ──────────────
         if all_dirs:
@@ -138,6 +143,11 @@ def _build_concerns_block(features: dict) -> str:
         name     = r["name"]
         all_dirs = r.get("all_window_directions", [])
         primary  = all_dirs[0].upper() if all_dirs else "NONE"
+        
+        # If user has edited the orientation, use that
+        user_orientation = r.get("orientation")
+        if user_orientation and user_orientation != "UNKNOWN":
+            primary = user_orientation.upper()
 
         if rating == "poor" and (r["is_high_use"] or _is_service(r["name"])):
             # Only flag poor orientation for HIGH-USE rooms (bedrooms, living, master bathroom etc.)

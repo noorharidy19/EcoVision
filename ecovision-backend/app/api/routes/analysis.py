@@ -303,3 +303,127 @@ async def analyze_sustainability(
             status_code=500,
             detail=f"Sustainability analysis error: {str(e)}"
         )
+
+
+# ─────────────────────────────────────────────
+# THERMAL RECOMMENDATIONS ENDPOINT
+# ─────────────────────────────────────────────
+@router.post("/thermal/recommendations")
+async def thermal_recommendations(
+    request: dict,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user)
+):
+    """
+    Generate thermal improvement scenarios based on current analysis.
+    Shows design modifications that could improve thermal comfort.
+    """
+    try:
+        analysis_result = request.get("analysis_result", {})
+        floorplan_json = request.get("floorplan_json", {})
+        
+        comfort_score = analysis_result.get("comfort_score", 0)
+        comfort_class = analysis_result.get("comfort_class", "Neutral")
+        
+        scenarios = []
+        main_issue = ""
+        has_recommendations = False
+        
+        # Generate scenarios based on current comfort class
+        if comfort_class == "Warm":
+            main_issue = "Space is too warm - indoor temperature exceeds comfort zone"
+            has_recommendations = True
+            
+            scenarios = [
+                {
+                    "design_action": "Reduce South/West Window Area",
+                    "description": "Decrease solar gain by reducing south and west-facing windows",
+                    "why_it_helps": "Less direct solar radiation reduces cooling load and interior temperature",
+                    "projected_score": min(100, comfort_score + 8),
+                    "projected_pmv": analysis_result.get("pmv", 0.5) - 0.3,
+                    "projected_ppd": max(0, analysis_result.get("ppd", 10) - 5),
+                    "projected_tdb": analysis_result.get("tdb_est", 25) - 1.5,
+                    "projected_tr": analysis_result.get("tr_est", 28) - 2.0
+                },
+                {
+                    "design_action": "Add Thermal Insulation",
+                    "description": "Increase wall/roof insulation to reduce radiant heat transfer",
+                    "why_it_helps": "Better insulation minimizes solar heat penetration through envelope",
+                    "projected_score": min(100, comfort_score + 12),
+                    "projected_pmv": analysis_result.get("pmv", 0.5) - 0.5,
+                    "projected_ppd": max(0, analysis_result.get("ppd", 10) - 8),
+                    "projected_tdb": analysis_result.get("tdb_est", 25) - 2.0,
+                    "projected_tr": analysis_result.get("tr_est", 28) - 2.5
+                },
+                {
+                    "design_action": "Install Shading Devices",
+                    "description": "Add external shading (overhangs, blinds, louvers) on solar-exposed facades",
+                    "why_it_helps": "Blocks direct solar radiation before it enters the building",
+                    "projected_score": min(100, comfort_score + 15),
+                    "projected_pmv": analysis_result.get("pmv", 0.5) - 0.6,
+                    "projected_ppd": max(0, analysis_result.get("ppd", 10) - 10),
+                    "projected_tdb": analysis_result.get("tdb_est", 25) - 2.5,
+                    "projected_tr": analysis_result.get("tr_est", 28) - 3.0
+                }
+            ]
+            
+        elif comfort_class == "Cool":
+            main_issue = "Space is too cool - indoor temperature is below comfort zone"
+            has_recommendations = True
+            
+            scenarios = [
+                {
+                    "design_action": "Increase South Window Area",
+                    "description": "Expand south-facing windows to maximize beneficial solar gains",
+                    "why_it_helps": "More solar access increases passive heating, naturally warming the space",
+                    "projected_score": min(100, comfort_score + 10),
+                    "projected_pmv": analysis_result.get("pmv", -1.5) + 0.4,
+                    "projected_ppd": max(0, analysis_result.get("ppd", 20) - 6),
+                    "projected_tdb": analysis_result.get("tdb_est", 18) + 1.5,
+                    "projected_tr": analysis_result.get("tr_est", 16) + 2.0
+                },
+                {
+                    "design_action": "Reduce Window Glazing Area",
+                    "description": "Minimize total window area to reduce heat loss",
+                    "why_it_helps": "Smaller window openings reduce thermal transmission and air leakage",
+                    "projected_score": min(100, comfort_score + 8),
+                    "projected_pmv": analysis_result.get("pmv", -1.5) + 0.3,
+                    "projected_ppd": max(0, analysis_result.get("ppd", 20) - 4),
+                    "projected_tdb": analysis_result.get("tdb_est", 18) + 1.0,
+                    "projected_tr": analysis_result.get("tr_est", 16) + 1.5
+                },
+                {
+                    "design_action": "Improve Thermal Mass",
+                    "description": "Use high thermal mass materials (concrete, masonry) to store heat",
+                    "why_it_helps": "Thermal mass absorbs solar heat and stabilizes indoor temperature",
+                    "projected_score": min(100, comfort_score + 12),
+                    "projected_pmv": analysis_result.get("pmv", -1.5) + 0.5,
+                    "projected_ppd": max(0, analysis_result.get("ppd", 20) - 8),
+                    "projected_tdb": analysis_result.get("tdb_est", 18) + 2.0,
+                    "projected_tr": analysis_result.get("tr_est", 16) + 2.5
+                }
+            ]
+            
+        else:  # Neutral
+            main_issue = "Excellent! Space is within optimal thermal comfort zone"
+            has_recommendations = False
+        
+        message = ""
+        if not has_recommendations:
+            message = "Your design is already in the comfort zone. No urgent modifications needed!"
+        
+        return {
+            "has_recommendations": has_recommendations,
+            "main_issue": main_issue,
+            "message": message,
+            "current_score": comfort_score,
+            "current_class": comfort_class,
+            "scenarios": scenarios
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Thermal recommendations error: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Thermal recommendations error: {str(e)}"
+        )

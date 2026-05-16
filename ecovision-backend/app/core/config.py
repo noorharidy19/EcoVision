@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     # optional keys used for DXF AI / MNML integrations
     dxf_ai_api_key: Optional[str] = None
     mnml_api_key: Optional[str] = None
+    groq_api_key: Optional[str] = None
 
     class Config:
         env_file = ".env"

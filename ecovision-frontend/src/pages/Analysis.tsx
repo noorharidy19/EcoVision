@@ -23,7 +23,7 @@ const Analysis = () => {
   const { id } = useParams<{ id: string }>();
   const [project, setProject] = useState<Project | null>(null);
   const [floorplan, setFloorplan] = useState<Floorplan | null>(null);
-  const [mode, setMode] = useState<"overview" | "explanation" | "recommendation">("overview");
+  const [mode, setMode] = useState<"overview" | "explanation" | "recommendation" | "rooms">("overview");
   const [showRecommendationEditor, setShowRecommendationEditor] = useState(false);
   const [exportFormat, setExportFormat] = useState<string>("dxf");
   const [exporting, setExporting] = useState(false);
@@ -33,6 +33,9 @@ const Analysis = () => {
   const [recommendationsLoading, setRecommendationsLoading] = useState(false);
   const [explanation, setExplanation] = useState<string | null>(null);
   const [explanationLoading, setExplanationLoading] = useState(false);
+  const [roomExplanations, setRoomExplanations] = useState<any[]>([]);
+  const [roomExplanationsLoading, setRoomExplanationsLoading] = useState(false);
+  const [editedOrientations, setEditedOrientations] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (id && id !== "new" && id !== "undefined") {
@@ -194,6 +197,181 @@ const Analysis = () => {
     }
   };
 
+  const loadRoomExplanations = async () => {
+    if (!floorplan) {
+      setError("No floorplan available");
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setError("Not authenticated");
+      return;
+    }
+
+    setRoomExplanationsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch("http://127.0.0.1:8000/recommendations/rooms/explanations", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          floorplan_id: floorplan.id
+        })
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`HTTP ${response.status}: ${text}`);
+      }
+
+      const data = await response.json();
+      const rooms = data.rooms || [];
+      setRoomExplanations(rooms);
+
+      const initialOrientations: Record<string, string> = {};
+      rooms.forEach((room: any) => {
+        initialOrientations[room.room_name] = room.current_orientation || "UNKNOWN";
+      });
+      setEditedOrientations(initialOrientations);
+      setMode("rooms");
+    } catch (err) {
+      console.error("Error loading room explanations:", err);
+      setError(err instanceof Error ? err.message : "Failed to load room explanations");
+    } finally {
+      setRoomExplanationsLoading(false);
+    }
+  };
+
+  const saveRoomOrientation = async (roomName: string, orientation: string) => {
+    if (!floorplan) {
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setError("Not authenticated");
+      return;
+    }
+
+    // Helper: reload floorplan from database to get fresh updated data
+    const reloadFloorplanData = async () => {
+      try {
+        const response = await fetch(`http://127.0.0.1:8000/floorplans/project/${id}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setFloorplan(data);
+          return data;
+        }
+      } catch (err) {
+        console.error("Error reloading floorplan:", err);
+      }
+      return null;
+    };
+
+    try {
+      const response = await fetch("http://127.0.0.1:8000/recommendations/rooms/update-orientation", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          floorplan_id: floorplan.id,
+          room_name: roomName,
+          orientation
+        })
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`HTTP ${response.status}: ${text}`);
+      }
+
+      setRoomExplanations((prev) =>
+        prev.map((room) =>
+          room.room_name === roomName
+            ? {
+                ...room,
+                current_orientation: orientation,
+                explanation:
+                  typeof room.explanation === "string"
+                    ? room.explanation.replace(/Current orientation is\s+[^.]+\./i, `Current orientation is ${orientation}.`)
+                    : room.explanation,
+              }
+            : room
+        )
+      );
+
+      setFloorplan((prev) => {
+        if (!prev?.json_data?.rooms) {
+          return prev;
+        }
+
+        const updatedRooms = prev.json_data.rooms.map((room: any) =>
+          room.name === roomName
+            ? {
+                ...room,
+                orientation,
+                primary_direction: orientation,
+                user_edited_orientation: true,
+              }
+            : room
+        );
+
+        return {
+          ...prev,
+          json_data: {
+            ...prev.json_data,
+            rooms: updatedRooms,
+          },
+        };
+      });
+
+      // Clear previous summary so user can regenerate explanation using latest saved orientation.
+      setExplanation(null);
+
+      // Reload floorplan from database to get fresh updated data.
+      const freshFloorplan = await reloadFloorplanData();
+      if (!freshFloorplan) {
+        console.warn("Could not reload floorplan data after orientation save");
+      }
+
+      // Regenerate summary immediately using fresh floorplan data from database.
+      try {
+        const explainResponse = await fetch("http://127.0.0.1:8000/recommendations/explain", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            floorplan_id: freshFloorplan?.id || floorplan.id
+          })
+        });
+
+        if (explainResponse.ok) {
+          const explainData = await explainResponse.json();
+          setExplanation(explainData.explanation || null);
+        }
+      } catch (refreshErr) {
+        console.error("Could not refresh explanation after orientation update:", refreshErr);
+      }
+    } catch (err) {
+      console.error("Error saving room orientation:", err);
+      setError(err instanceof Error ? err.message : "Failed to save room orientation");
+    }
+  };
+
   const exportFile = async (format: string) => {
     if (!floorplan) {
       setError("No floorplan available to export");
@@ -300,6 +478,18 @@ const Analysis = () => {
             >
               {recommendationsLoading ? "Generating..." : "🌿 Recommendations"}
             </button>
+            <button 
+              onClick={loadRoomExplanations}
+              disabled={!floorplan || roomExplanationsLoading}
+              style={{ 
+                marginLeft: "8px",
+                backgroundColor: mode === "rooms" ? "#8B5CF6" : undefined,
+                opacity: !floorplan || roomExplanationsLoading ? 0.5 : 1,
+                cursor: !floorplan || roomExplanationsLoading ? "not-allowed" : "pointer"
+              }}
+            >
+              {roomExplanationsLoading ? "Loading..." : "📍 Room Analysis"}
+            </button>
           </div>
 
           <div className="design-preview">
@@ -311,6 +501,7 @@ const Analysis = () => {
                 <ul>
                   <li><strong>📋 Explanation</strong> - Get a professional floor plan summary</li>
                   <li><strong>🌿 Recommendations</strong> - View sustainability recommendations</li>
+                  <li><strong>📍 Room Analysis</strong> - Llama room explanation + optional orientation update</li>
                 </ul>
                 {!floorplan && <p style={{ color: "orange" }}>⚠️ Floorplan data not yet loaded</p>}
               </div>
@@ -329,6 +520,68 @@ const Analysis = () => {
                     <p>Click "📋 Explanation" to generate a professional analysis of your floor plan.</p>
                   </div>
                 )}
+              </div>
+            )}
+
+            {mode === "rooms" && (
+              <div style={{ padding: "20px" }}>
+                <h4>📍 Room Analysis</h4>
+                <p style={{ color: "#666", marginBottom: "16px" }}>
+                  Optional: change room orientation from dropdown. Your selection is saved automatically.
+                </p>
+
+                {roomExplanations.length > 0 ? (
+                  <div style={{ display: "grid", gap: "12px" }}>
+                    {roomExplanations.map((room: any, idx: number) => (
+                      <div
+                        key={`${room.room_name}-${idx}`}
+                        style={{ border: "1px solid #ddd", borderRadius: "8px", padding: "14px", backgroundColor: "#fafafa" }}
+                      >
+                        <h6 style={{ marginTop: 0, marginBottom: "8px" }}>{room.room_name}</h6>
+                        <p style={{ margin: "0 0 8px 0", color: "#333" }}>{room.explanation}</p>
+                        <p style={{ margin: "0 0 8px 0", fontSize: "13px", color: "#666" }}>
+                          <strong>Area:</strong> {room.area_m2} m2
+                        </p>
+                        {room.window_directions && room.window_directions.length > 0 && (
+                          <p style={{ margin: "0 0 10px 0", fontSize: "13px", color: "#666" }}>
+                            <strong>Window Directions:</strong> {room.window_directions.join(", ")}
+                          </p>
+                        )}
+
+                        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                          <label style={{ fontWeight: 600 }}>Orientation:</label>
+                          <select
+                            value={editedOrientations[room.room_name] || "UNKNOWN"}
+                            onChange={async (e) => {
+                              const selected = e.target.value;
+                              setEditedOrientations((prev) => ({
+                                ...prev,
+                                [room.room_name]: selected,
+                              }));
+                              await saveRoomOrientation(room.room_name, selected);
+                            }}
+                          >
+                            <option value="UNKNOWN">UNKNOWN</option>
+                            <option value="N">N</option>
+                            <option value="NE">NE</option>
+                            <option value="E">E</option>
+                            <option value="SE">SE</option>
+                            <option value="S">S</option>
+                            <option value="SW">SW</option>
+                            <option value="W">W</option>
+                            <option value="NW">NW</option>
+                          </select>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p>No rooms available. Click Room Analysis to load room explanations.</p>
+                )}
+
+                <div style={{ marginTop: "16px" }}>
+                  <button onClick={() => setMode("overview")}>Back</button>
+                </div>
               </div>
             )}
 
