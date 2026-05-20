@@ -6,7 +6,12 @@
       "category": "brick",
       "r_value_m2K_W": 0.1141573033707865,
       "carbon_kgCO2_per_m2": 41.550336,
-      "u_value_W_m2K": 8.7598
+      "u_value_W_m2K": 8.7598,
+      "thermal_mass": 1516800.0,
+      "insulation_score": 0.1141573033707865,
+      "pred_carbon_kgCO2_per_kg": 0.2062911897072042,
+      "pred_thermal_mass": 1469653.188613008,
+      "pred_insulation_score": 0.1147827100030635
     },
     {
       "id": "MAT002",
@@ -14,7 +19,12 @@
       "category": "brick",
       "r_value_m2K_W": 0.0761194029850746,
       "carbon_kgCO2_per_m2": 52.1424,
-      "u_value_W_m2K": 13.1373
+      "u_value_W_m2K": 13.1373,
+      "thermal_mass": 1896000.0,
+      "insulation_score": 0.0761194029850746,
+      "pred_carbon_kgCO2_per_kg": 0.2026989863393338,
+      "pred_thermal_mass": 1967082.1856651471,
+      "pred_insulation_score": 0.0740996994104082
     },
     {
       "id": "MAT003",
@@ -22,7 +32,12 @@
       "category": "brick",
       "r_value_m2K_W": 0.0860759493670886,
       "carbon_kgCO2_per_m2": 48.66624,
-      "u_value_W_m2K": 11.6176
+      "u_value_W_m2K": 11.6176,
+      "thermal_mass": 1769600.0,
+      "insulation_score": 0.0860759493670886,
+      "pred_carbon_kgCO2_per_kg": 0.2026989863393338,
+      "pred_thermal_mass": 1849388.753809884,
+      "pred_insulation_score": 0.0796888084762674
     },
     {
       "id": "MAT004",
@@ -30,7 +45,12 @@
       "category": "brick",
       "r_value_m2K_W": 0.0999999999999999,
       "carbon_kgCO2_per_m2": 45.19008,
-      "u_value_W_m2K": 10.0
+      "u_value_W_m2K": 10.0,
+      "thermal_mass": 1643200.0,
+      "insulation_score": 0.0999999999999999,
+      "pred_carbon_kgCO2_per_kg": 0.2031788748574804,
+      "pred_thermal_mass": 1647615.891914994,
+      "pred_insulation_score": 0.114382378820542
     },
     {
       "id": "MAT005",
@@ -38,7 +58,12 @@
       "category": "brick",
       "r_value_m2K_W": 0.1139664804469273,
       "carbon_kgCO2_per_m2": 41.71392,
-      "u_value_W_m2K": 8.7745
+      "u_value_W_m2K": 8.7745,
+      "thermal_mass": 1516800.0,
+      "insulation_score": 0.1139664804469273,
+      "pred_carbon_kgCO2_per_kg": 0.2031788748574804,
+      "pred_thermal_mass": 1469653.188613008,
+      "pred_insulation_score": 0.114382378820542
     },
     {
       "id": "MAT006",
@@ -46,7 +71,12 @@
       "category": "brick",
       "r_value_m2K_W": 0.1307692307692307,
       "carbon_kgCO2_per_m2": 38.23776,
-      "u_value_W_m2K": 7.6471
+      "u_value_W_m2K": 7.6471,
+      "thermal_mass": 1390400.0,
+      "insulation_score": 0.1307692307692307,
+      "pred_carbon_kgCO2_per_kg": 0.2031788748574804,
+      "pred_thermal_mass": 1384581.000575654,
+      "pred_insulation_score": 0.1291532786974042
     },
     {
       "id": "MAT007",
@@ -54,7 +84,12 @@
       "category": "brick",
       "r_value_m2K_W": 0.151111111111111,
       "carbon_kgCO2_per_m2": 34.761599999999994,
-      "u_value_W_m2K": 6.6176
+      "u_value_W_m2K": 6.6176,
+      "thermal_mass": 1264000.0,
+      "insulation_score": 0.151111111111111,
+      "pred_carbon_kgCO2_per_kg": 0.1897652325136427,
+      "pred_thermal_mass": 1286564.7878575409,
+      "pred_insulation_score": 0.1484392720773208
     },
     {
       "id": "MAT008",
@@ -62,7 +97,12 @@
       "category": "brick",
       "r_value_m2K_W": 0.1789473684210526,
       "carbon_kgCO2_per_m2": 31.28544,
-      "u_value_W_m2K": 5.5882
+      "u_value_W_m2K": 5.5882,
+      "thermal_mass": 1137600.0,
+      "insulation_score": 0.1789473684210526,
+      "pred_carbon_kgCO2_per_kg": 0.1380624678097572,
+      "pred_thermal_mass": 1152344.861759121,
+      "pred_insulation_score": 0.1706004534147921
     },
     {
       "id": "MAT009",
@@ -70,7 +110,12 @@
       "category": "brick",
       "r_value_m2K_W": 0.2125,
       "carbon_kgCO2_per_m2": 27.80928,
-      "u_value_W_m2K": 4.7059
+      "u_value_W_m2K": 4.7059,
+      "thermal_mass": 1011200.0,
+      "insulation_score": 0.2125,
+      "pred_carbon_kgCO2_per_kg": 0.1990048832500339,
+      "pred_thermal_mass": 1014110.3650518132,
+      "pred_insulation_score": 0.2035730346125194
     },
     {
       "id": "MAT010",
@@ -78,7 +123,12 @@
       "category": "brick",
       "r_value_m2K_W": 0.2518518518518518,
       "carbon_kgCO2_per_m2": 24.33312,
-      "u_value_W_m2K": 3.9706
+      "u_value_W_m2K": 3.9706,
+      "thermal_mass": 884800.0,
+      "insulation_score": 0.2518518518518518,
+      "pred_carbon_kgCO2_per_kg": 0.3401855362685053,
+      "pred_thermal_mass": 914283.7153519104,
+      "pred_insulation_score": 0.2433737558900865
     },
     {
       "id": "MAT021",
@@ -86,7 +136,12 @@
       "category": "concrete",
       "r_value_m2K_W": 0.0237209302325581,
       "carbon_kgCO2_per_m2": 14.688,
-      "u_value_W_m2K": 42.1569
+      "u_value_W_m2K": 42.1569,
+      "thermal_mass": 2160000.0,
+      "insulation_score": 0.0237209302325581,
+      "pred_carbon_kgCO2_per_kg": 0.1162920353868087,
+      "pred_thermal_mass": 2120513.100764476,
+      "pred_insulation_score": 0.0245682340271017
     },
     {
       "id": "MAT022",
@@ -94,7 +149,12 @@
       "category": "concrete",
       "r_value_m2K_W": 0.0261538461538461,
       "carbon_kgCO2_per_m2": 13.708799999999998,
-      "u_value_W_m2K": 38.2353
+      "u_value_W_m2K": 38.2353,
+      "thermal_mass": 2016000.0,
+      "insulation_score": 0.0261538461538461,
+      "pred_carbon_kgCO2_per_kg": 0.1162920353868087,
+      "pred_thermal_mass": 2002819.6689092133,
+      "pred_insulation_score": 0.0245682340271017
     },
     {
       "id": "MAT023",
@@ -102,7 +162,12 @@
       "category": "concrete",
       "r_value_m2K_W": 0.0351724137931034,
       "carbon_kgCO2_per_m2": 12.7296,
-      "u_value_W_m2K": 28.4314
+      "u_value_W_m2K": 28.4314,
+      "thermal_mass": 1872000.0,
+      "insulation_score": 0.0351724137931034,
+      "pred_carbon_kgCO2_per_kg": 0.1162920353868087,
+      "pred_thermal_mass": 1885667.8760647604,
+      "pred_insulation_score": 0.0287313903484744
     },
     {
       "id": "MAT024",
@@ -110,7 +175,12 @@
       "category": "concrete",
       "r_value_m2K_W": 0.0318749999999999,
       "carbon_kgCO2_per_m2": 12.79488,
-      "u_value_W_m2K": 31.3725
+      "u_value_W_m2K": 31.3725,
+      "thermal_mass": 2016000.0,
+      "insulation_score": 0.0318749999999999,
+      "pred_carbon_kgCO2_per_kg": 0.1162920353868087,
+      "pred_thermal_mass": 1998008.6484612816,
+      "pred_insulation_score": 0.0261208169089155
     },
     {
       "id": "MAT025",
@@ -118,7 +188,12 @@
       "category": "concrete",
       "r_value_m2K_W": 0.0447368421052631,
       "carbon_kgCO2_per_m2": 10.96704,
-      "u_value_W_m2K": 22.3529
+      "u_value_W_m2K": 22.3529,
+      "thermal_mass": 1728000.0,
+      "insulation_score": 0.0447368421052631,
+      "pred_carbon_kgCO2_per_kg": 0.1162920353868087,
+      "pred_thermal_mass": 1701971.8571852434,
+      "pred_insulation_score": 0.0414808356636651
     },
     {
       "id": "MAT026",
@@ -126,7 +201,12 @@
       "category": "concrete",
       "r_value_m2K_W": 0.0645569620253164,
       "carbon_kgCO2_per_m2": 9.1392,
-      "u_value_W_m2K": 15.4902
+      "u_value_W_m2K": 15.4902,
+      "thermal_mass": 1440000.0,
+      "insulation_score": 0.0645569620253164,
+      "pred_carbon_kgCO2_per_kg": 0.1198842387546791,
+      "pred_thermal_mass": 1449239.4672049943,
+      "pred_insulation_score": 0.0756144978171223
     },
     {
       "id": "MAT027",
@@ -134,7 +214,12 @@
       "category": "concrete",
       "r_value_m2K_W": 0.0474418604651162,
       "carbon_kgCO2_per_m2": 29.376,
-      "u_value_W_m2K": 21.0784
+      "u_value_W_m2K": 21.0784,
+      "thermal_mass": 2160000.0,
+      "insulation_score": 0.0474418604651162,
+      "pred_carbon_kgCO2_per_kg": 0.1192409418188855,
+      "pred_thermal_mass": 2120513.100764476,
+      "pred_insulation_score": 0.0660044647737105
     },
     {
       "id": "MAT028",
@@ -142,7 +227,12 @@
       "category": "concrete",
       "r_value_m2K_W": 0.0523076923076923,
       "carbon_kgCO2_per_m2": 27.4176,
-      "u_value_W_m2K": 19.1176
+      "u_value_W_m2K": 19.1176,
+      "thermal_mass": 2016000.0,
+      "insulation_score": 0.0523076923076923,
+      "pred_carbon_kgCO2_per_kg": 0.1192409418188855,
+      "pred_thermal_mass": 2002819.6689092133,
+      "pred_insulation_score": 0.0660044647737105
     },
     {
       "id": "MAT029",
@@ -150,7 +240,12 @@
       "category": "concrete",
       "r_value_m2K_W": 0.0703448275862069,
       "carbon_kgCO2_per_m2": 25.4592,
-      "u_value_W_m2K": 14.2157
+      "u_value_W_m2K": 14.2157,
+      "thermal_mass": 1872000.0,
+      "insulation_score": 0.0703448275862069,
+      "pred_carbon_kgCO2_per_kg": 0.1192409418188855,
+      "pred_thermal_mass": 1885667.8760647604,
+      "pred_insulation_score": 0.0701676210950831
     },
     {
       "id": "MAT030",
@@ -158,7 +253,12 @@
       "category": "concrete",
       "r_value_m2K_W": 0.0637499999999999,
       "carbon_kgCO2_per_m2": 25.58976,
-      "u_value_W_m2K": 15.6863
+      "u_value_W_m2K": 15.6863,
+      "thermal_mass": 2016000.0,
+      "insulation_score": 0.0637499999999999,
+      "pred_carbon_kgCO2_per_kg": 0.1192409418188855,
+      "pred_thermal_mass": 1998008.6484612816,
+      "pred_insulation_score": 0.0675570476555243
     },
     {
       "id": "MAT031",
@@ -166,7 +266,12 @@
       "category": "concrete",
       "r_value_m2K_W": 0.0894736842105263,
       "carbon_kgCO2_per_m2": 21.93408,
-      "u_value_W_m2K": 11.1765
+      "u_value_W_m2K": 11.1765,
+      "thermal_mass": 1728000.0,
+      "insulation_score": 0.0894736842105263,
+      "pred_carbon_kgCO2_per_kg": 0.1192409418188855,
+      "pred_thermal_mass": 1701971.8571852434,
+      "pred_insulation_score": 0.0842394215556325
     },
     {
       "id": "MAT032",
@@ -174,7 +279,12 @@
       "category": "concrete",
       "r_value_m2K_W": 0.1291139240506329,
       "carbon_kgCO2_per_m2": 18.2784,
-      "u_value_W_m2K": 7.7451
+      "u_value_W_m2K": 7.7451,
+      "thermal_mass": 1440000.0,
+      "insulation_score": 0.1291139240506329,
+      "pred_carbon_kgCO2_per_kg": 0.1197208303370322,
+      "pred_thermal_mass": 1449239.4672049943,
+      "pred_insulation_score": 0.1190762327360259
     },
     {
       "id": "MAT033",
@@ -182,7 +292,12 @@
       "category": "concrete_block",
       "r_value_m2K_W": 0.1769911504424779,
       "carbon_kgCO2_per_m2": 37.6584,
-      "u_value_W_m2K": 5.65
+      "u_value_W_m2K": 5.65,
+      "thermal_mass": 2033200.0,
+      "insulation_score": 0.1769911504424779,
+      "pred_carbon_kgCO2_per_kg": 0.134707120745506,
+      "pred_thermal_mass": 2004250.13681302,
+      "pred_insulation_score": 0.2193891414320978
     },
     {
       "id": "MAT034",
@@ -190,7 +305,12 @@
       "category": "concrete_block",
       "r_value_m2K_W": 0.1769911504424779,
       "carbon_kgCO2_per_m2": 81.77,
-      "u_value_W_m2K": 5.65
+      "u_value_W_m2K": 5.65,
+      "thermal_mass": 2033200.0,
+      "insulation_score": 0.1769911504424779,
+      "pred_carbon_kgCO2_per_kg": 0.134707120745506,
+      "pred_thermal_mass": 2004250.13681302,
+      "pred_insulation_score": 0.2193891414320978
     },
     {
       "id": "MAT035",
@@ -198,7 +318,12 @@
       "category": "concrete_block",
       "r_value_m2K_W": 0.2654867256637168,
       "carbon_kgCO2_per_m2": 56.4876,
-      "u_value_W_m2K": 3.7667
+      "u_value_W_m2K": 3.7667,
+      "thermal_mass": 2033200.0,
+      "insulation_score": 0.2654867256637168,
+      "pred_carbon_kgCO2_per_kg": 0.134707120745506,
+      "pred_thermal_mass": 2004250.13681302,
+      "pred_insulation_score": 0.2193891414320978
     },
     {
       "id": "MAT036",
@@ -206,7 +331,12 @@
       "category": "concrete_block",
       "r_value_m2K_W": 0.2654867256637168,
       "carbon_kgCO2_per_m2": 122.655,
-      "u_value_W_m2K": 3.7667
+      "u_value_W_m2K": 3.7667,
+      "thermal_mass": 2033200.0,
+      "insulation_score": 0.2654867256637168,
+      "pred_carbon_kgCO2_per_kg": 0.134707120745506,
+      "pred_thermal_mass": 2004250.13681302,
+      "pred_insulation_score": 0.2193891414320978
     }
   ],
   "roofBaseMaterials": [
@@ -216,7 +346,12 @@
       "category": "concrete",
       "r_value_m2K_W": 0.0474418604651162,
       "carbon_kgCO2_per_m2": 29.376,
-      "u_value_W_m2K": 21.0784
+      "u_value_W_m2K": 21.0784,
+      "thermal_mass": 2160000.0,
+      "insulation_score": 0.0474418604651162,
+      "pred_carbon_kgCO2_per_kg": 0.1192409418188855,
+      "pred_thermal_mass": 2120513.100764476,
+      "pred_insulation_score": 0.0660044647737105
     },
     {
       "id": "MAT028",
@@ -224,7 +359,12 @@
       "category": "concrete",
       "r_value_m2K_W": 0.0523076923076923,
       "carbon_kgCO2_per_m2": 27.4176,
-      "u_value_W_m2K": 19.1176
+      "u_value_W_m2K": 19.1176,
+      "thermal_mass": 2016000.0,
+      "insulation_score": 0.0523076923076923,
+      "pred_carbon_kgCO2_per_kg": 0.1192409418188855,
+      "pred_thermal_mass": 2002819.6689092133,
+      "pred_insulation_score": 0.0660044647737105
     },
     {
       "id": "MAT029",
@@ -232,7 +372,12 @@
       "category": "concrete",
       "r_value_m2K_W": 0.0703448275862069,
       "carbon_kgCO2_per_m2": 25.4592,
-      "u_value_W_m2K": 14.2157
+      "u_value_W_m2K": 14.2157,
+      "thermal_mass": 1872000.0,
+      "insulation_score": 0.0703448275862069,
+      "pred_carbon_kgCO2_per_kg": 0.1192409418188855,
+      "pred_thermal_mass": 1885667.8760647604,
+      "pred_insulation_score": 0.0701676210950831
     },
     {
       "id": "MAT030",
@@ -240,7 +385,12 @@
       "category": "concrete",
       "r_value_m2K_W": 0.0637499999999999,
       "carbon_kgCO2_per_m2": 25.58976,
-      "u_value_W_m2K": 15.6863
+      "u_value_W_m2K": 15.6863,
+      "thermal_mass": 2016000.0,
+      "insulation_score": 0.0637499999999999,
+      "pred_carbon_kgCO2_per_kg": 0.1192409418188855,
+      "pred_thermal_mass": 1998008.6484612816,
+      "pred_insulation_score": 0.0675570476555243
     },
     {
       "id": "MAT031",
@@ -248,7 +398,12 @@
       "category": "concrete",
       "r_value_m2K_W": 0.0894736842105263,
       "carbon_kgCO2_per_m2": 21.93408,
-      "u_value_W_m2K": 11.1765
+      "u_value_W_m2K": 11.1765,
+      "thermal_mass": 1728000.0,
+      "insulation_score": 0.0894736842105263,
+      "pred_carbon_kgCO2_per_kg": 0.1192409418188855,
+      "pred_thermal_mass": 1701971.8571852434,
+      "pred_insulation_score": 0.0842394215556325
     },
     {
       "id": "MAT032",
@@ -256,7 +411,12 @@
       "category": "concrete",
       "r_value_m2K_W": 0.1291139240506329,
       "carbon_kgCO2_per_m2": 18.2784,
-      "u_value_W_m2K": 7.7451
+      "u_value_W_m2K": 7.7451,
+      "thermal_mass": 1440000.0,
+      "insulation_score": 0.1291139240506329,
+      "pred_carbon_kgCO2_per_kg": 0.1197208303370322,
+      "pred_thermal_mass": 1449239.4672049943,
+      "pred_insulation_score": 0.1190762327360259
     }
   ],
   "floorBaseMaterials": [
@@ -266,7 +426,12 @@
       "category": "concrete_block",
       "r_value_m2K_W": 0.1769911504424779,
       "carbon_kgCO2_per_m2": 37.6584,
-      "u_value_W_m2K": 5.65
+      "u_value_W_m2K": 5.65,
+      "thermal_mass": 2033200.0,
+      "insulation_score": 0.1769911504424779,
+      "pred_carbon_kgCO2_per_kg": 0.134707120745506,
+      "pred_thermal_mass": 2004250.13681302,
+      "pred_insulation_score": 0.2193891414320978
     },
     {
       "id": "MAT034",
@@ -274,7 +439,12 @@
       "category": "concrete_block",
       "r_value_m2K_W": 0.1769911504424779,
       "carbon_kgCO2_per_m2": 81.77,
-      "u_value_W_m2K": 5.65
+      "u_value_W_m2K": 5.65,
+      "thermal_mass": 2033200.0,
+      "insulation_score": 0.1769911504424779,
+      "pred_carbon_kgCO2_per_kg": 0.134707120745506,
+      "pred_thermal_mass": 2004250.13681302,
+      "pred_insulation_score": 0.2193891414320978
     },
     {
       "id": "MAT035",
@@ -282,7 +452,12 @@
       "category": "concrete_block",
       "r_value_m2K_W": 0.2654867256637168,
       "carbon_kgCO2_per_m2": 56.4876,
-      "u_value_W_m2K": 3.7667
+      "u_value_W_m2K": 3.7667,
+      "thermal_mass": 2033200.0,
+      "insulation_score": 0.2654867256637168,
+      "pred_carbon_kgCO2_per_kg": 0.134707120745506,
+      "pred_thermal_mass": 2004250.13681302,
+      "pred_insulation_score": 0.2193891414320978
     },
     {
       "id": "MAT036",
@@ -290,7 +465,12 @@
       "category": "concrete_block",
       "r_value_m2K_W": 0.2654867256637168,
       "carbon_kgCO2_per_m2": 122.655,
-      "u_value_W_m2K": 3.7667
+      "u_value_W_m2K": 3.7667,
+      "thermal_mass": 2033200.0,
+      "insulation_score": 0.2654867256637168,
+      "pred_carbon_kgCO2_per_kg": 0.134707120745506,
+      "pred_thermal_mass": 2004250.13681302,
+      "pred_insulation_score": 0.2193891414320978
     }
   ],
   "insulationMaterials": [
@@ -308,7 +488,12 @@
       "category": "Insulation",
       "r_value_m2K_W": 1.020408163265306,
       "carbon_kgCO2_per_m2": 2.7192000000000003,
-      "u_value_W_m2K": 0.98
+      "u_value_W_m2K": 0.98,
+      "thermal_mass": 38160.0,
+      "insulation_score": 1.020408163265306,
+      "pred_carbon_kgCO2_per_kg": 3.923145035249412,
+      "pred_thermal_mass": 46674.103475480784,
+      "pred_insulation_score": 0.8645561553086148
     },
     {
       "id": "MAT038",
@@ -316,7 +501,12 @@
       "category": "Insulation",
       "r_value_m2K_W": 0.8620689655172414,
       "carbon_kgCO2_per_m2": 2.67525,
-      "u_value_W_m2K": 1.16
+      "u_value_W_m2K": 1.16,
+      "thermal_mass": 35090.0,
+      "insulation_score": 0.8620689655172414,
+      "pred_carbon_kgCO2_per_kg": 3.923145035249412,
+      "pred_thermal_mass": 46674.103475480784,
+      "pred_insulation_score": 0.8645561553086148
     },
     {
       "id": "MAT039",
@@ -324,7 +514,12 @@
       "category": "Insulation",
       "r_value_m2K_W": 0.6756756756756758,
       "carbon_kgCO2_per_m2": 1.476,
-      "u_value_W_m2K": 1.48
+      "u_value_W_m2K": 1.48,
+      "thermal_mass": 19360.0,
+      "insulation_score": 0.6756756756756758,
+      "pred_carbon_kgCO2_per_kg": 3.823342792958757,
+      "pred_thermal_mass": 55441.89353882112,
+      "pred_insulation_score": 0.747750572325271
     },
     {
       "id": "MAT040",
@@ -332,7 +527,12 @@
       "category": "Insulation",
       "r_value_m2K_W": 0.7575757575757576,
       "carbon_kgCO2_per_m2": 2.952,
-      "u_value_W_m2K": 1.32
+      "u_value_W_m2K": 1.32,
+      "thermal_mass": 38720.0,
+      "insulation_score": 0.7575757575757576,
+      "pred_carbon_kgCO2_per_kg": 3.8172808823545066,
+      "pred_thermal_mass": 77375.93680881454,
+      "pred_insulation_score": 0.831064257397206
     }
   ],
   "windowTypes": [
@@ -343,7 +543,12 @@
       "r_value_m2K_W": 0.1818,
       "carbon_kgCO2_per_m2": 0.0,
       "u_value_W_m2K": 5.5,
-      "shgc": 0.85
+      "shgc": 0.85,
+      "thermal_mass": null,
+      "insulation_score": null,
+      "pred_carbon_kgCO2_per_kg": null,
+      "pred_thermal_mass": null,
+      "pred_insulation_score": null
     },
     {
       "id": "MAT042",
@@ -352,7 +557,12 @@
       "r_value_m2K_W": 0.3571,
       "carbon_kgCO2_per_m2": 0.0,
       "u_value_W_m2K": 2.8,
-      "shgc": 0.65
+      "shgc": 0.65,
+      "thermal_mass": null,
+      "insulation_score": null,
+      "pred_carbon_kgCO2_per_kg": null,
+      "pred_thermal_mass": null,
+      "pred_insulation_score": null
     },
     {
       "id": "MAT043",
@@ -361,7 +571,12 @@
       "r_value_m2K_W": 0.625,
       "carbon_kgCO2_per_m2": 0.0,
       "u_value_W_m2K": 1.6,
-      "shgc": 0.45
+      "shgc": 0.45,
+      "thermal_mass": null,
+      "insulation_score": null,
+      "pred_carbon_kgCO2_per_kg": null,
+      "pred_thermal_mass": null,
+      "pred_insulation_score": null
     }
   ]
 }

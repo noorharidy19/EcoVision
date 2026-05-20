@@ -49,21 +49,30 @@ interface MaterialsMapping {
   windowTypes: WindowType[];
 }
 
+interface OptimizationOption {
+  after: {
+    materials: Record<string, { name: string; carbon_kg: number; comfort: number }>;
+    total_carbon: number;
+    avg_comfort: number;
+    final_score: number;
+  };
+  comparison: {
+    carbon_saved_kg: number;
+    carbon_reduction_pct: number;
+    comfort_change: number;
+    comfort_status: string;
+  };
+}
+
 interface RoomAnalysis {
   room: string;
   area_m2: number;
   your_selection: {
     materials: Record<string, { name: string; carbon_kg: number }>;
     total_carbon_kg: number;
+    avg_comfort?: number;
   };
-  recommended_solution: {
-    materials: Record<string, { name: string; carbon_kg: number }>;
-    total_carbon_kg: number;
-  };
-  carbon_savings: {
-    saved_kg: number;
-    reduction_percent: number;
-  };
+  recommendations: OptimizationOption[];
 }
 
 interface MLAnalysisResult {
@@ -74,6 +83,13 @@ interface MLAnalysisResult {
     reduction_percent: number;
   };
   rooms: RoomAnalysis[];
+}
+
+interface SustainabilityApiResponse {
+  status?: "success" | "error";
+  summary?: MLAnalysisResult["summary"];
+  rooms?: RoomAnalysis[];
+  error?: string;
 }
 
 type RecommendationMode = "overview" | "thermal" | "visual" | "sustainability" | "material";
@@ -94,7 +110,7 @@ const Sustainability = () => {
   const [sustainabilityLoading, setSustainabilityLoading] = useState(false);
   
   // ML Model analysis states
-  const [mlSustainabilityScore, setMlSustainabilityScore] = useState<any>(null);
+  const [mlSustainabilityScore, setMlSustainabilityScore] = useState<SustainabilityApiResponse | null>(null);
   const [mlAnalysisLoading, setMlAnalysisLoading] = useState(false);
   const [roomByRoomAnalysis, setRoomByRoomAnalysis] = useState<MLAnalysisResult | null>(null);
   
@@ -218,82 +234,80 @@ const Sustainability = () => {
 
     setError(null);
     setMode("thermal");
-    // Thermal analysis can be triggered from the thermal mode view
   };
 
   // Generate Visual Comfort recommendations
   const generateVisualRecommendations = async () => {
-  if (!floorplan) {
-    setError("No floorplan available");
-    return;
-  }
-
-  setVisualLoading(true);
-  setError(null);
-
-  try {
-    const token = localStorage.getItem("token");
-    if (!token) throw new Error("Not authenticated");
-
-    // Use the floorplan's json_data if available, otherwise fetch it
-    const floorplanData = floorplan.json_data || {};
-
-    const response = await fetch("http://127.0.0.1:8000/analysis/visual", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        floorplan_id: floorplan.id,
-        floorplan_json: floorplanData
-      })
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Visual analysis failed: ${errorText}`);
+    if (!floorplan) {
+      setError("No floorplan available");
+      return;
     }
 
-    const data = await response.json();
-    setVisualScore(data);
-    setMode("visual");
-  } catch (err) {
-    setError(err instanceof Error ? err.message : "Visual analysis failed");
-  } finally {
-    setVisualLoading(false);
-  }
-}; 
+    setVisualLoading(true);
+    setError(null);
 
-const fetchVisualRecommendations = async () => {
-  if (!visualScore || !floorplan) return;
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("Not authenticated");
 
-  setVisualRecsLoading(true);
-  try {
-    const token = localStorage.getItem("token");
-    const response = await fetch(
-      "http://127.0.0.1:8000/analysis/visual/recommendations",
-      {
+      const floorplanData = floorplan.json_data || {};
+
+      const response = await fetch("http://127.0.0.1:8000/analysis/visual", {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          analysis_result: visualScore,
-          floorplan_json: floorplan.json_data || {}
+          floorplan_id: floorplan.id,
+          floorplan_json: floorplanData
         })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Visual analysis failed: ${errorText}`);
       }
-    );
-    const data = await response.json();
-    setVisualRecs(data);
-    setShowVisualRecs(true);
-  } catch (err) {
-    setError("Failed to load recommendations");
-  } finally {
-    setVisualRecsLoading(false);
-  }
-};
+
+      const data = await response.json();
+      setVisualScore(data);
+      setMode("visual");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Visual analysis failed");
+    } finally {
+      setVisualLoading(false);
+    }
+  }; 
+
+  const fetchVisualRecommendations = async () => {
+    if (!visualScore || !floorplan) return;
+
+    setVisualRecsLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        "http://127.0.0.1:8000/analysis/visual/recommendations",
+        {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            analysis_result: visualScore,
+            floorplan_json: floorplan.json_data || {}
+          })
+        }
+      );
+      const data = await response.json();
+      setVisualRecs(data);
+      setShowVisualRecs(true);
+    } catch (err) {
+      setError("Failed to load recommendations");
+    } finally {
+      setVisualRecsLoading(false);
+    }
+  };
 
   // Generate Sustainability recommendations
   const generateSustainabilityRecommendations = async () => {
@@ -320,18 +334,6 @@ const fetchVisualRecommendations = async () => {
     }
 
     setMode("material");
-  };
-
-  const calculateTotalCarbonFromSelection = () => {
-    let total = 0;
-    if (wallBase) total += wallBase.carbon_kgCO2_per_m2;
-    if (wallInsulation) total += wallInsulation.carbon_kgCO2_per_m2;
-    if (roofBase) total += roofBase.carbon_kgCO2_per_m2;
-    if (roofInsulation) total += roofInsulation.carbon_kgCO2_per_m2;
-    if (floorBase) total += floorBase.carbon_kgCO2_per_m2;
-    if (floorInsulation) total += floorInsulation.carbon_kgCO2_per_m2;
-    if (windowType) total += windowType.carbon_kgCO2_per_m2;
-    return total;
   };
 
   // Calculate thermal comfort score from material selection
@@ -385,34 +387,6 @@ const fetchVisualRecommendations = async () => {
 
       const thermalData = await response.json();
       console.log("Thermal score received:", thermalData);
-      
-      // Calculate carbon footprint from materials
-      const carbon = {
-        wall: {
-          base: wallBase?.carbon_kgCO2_per_m2 || 0,
-          insulation: wallInsulation?.carbon_kgCO2_per_m2 || 0,
-          total: (wallBase?.carbon_kgCO2_per_m2 || 0) + (wallInsulation?.carbon_kgCO2_per_m2 || 0)
-        },
-        roof: {
-          base: roofBase?.carbon_kgCO2_per_m2 || 0,
-          insulation: roofInsulation?.carbon_kgCO2_per_m2 || 0,
-          total: (roofBase?.carbon_kgCO2_per_m2 || 0) + (roofInsulation?.carbon_kgCO2_per_m2 || 0)
-        },
-        floor: {
-          base: floorBase?.carbon_kgCO2_per_m2 || 0,
-          insulation: floorInsulation?.carbon_kgCO2_per_m2 || 0,
-          total: (floorBase?.carbon_kgCO2_per_m2 || 0) + (floorInsulation?.carbon_kgCO2_per_m2 || 0)
-        },
-        window: windowType?.carbon_kgCO2_per_m2 || 0
-      };
-      
-      const totalCarbon = carbon.wall.total + carbon.roof.total + carbon.floor.total + carbon.window;
-      const carbonData = {
-        breakdown: carbon,
-        total: totalCarbon
-      };
-      
-      console.log("Carbon footprint calculated:", carbonData);
       
       setThermalScore(thermalData);
       setMode("thermal");
@@ -476,21 +450,7 @@ const fetchVisualRecommendations = async () => {
         return;
       }
 
-      // Get rooms from floorplan JSON data
       const rooms = floorplan.json_data?.rooms || [];
-
-      // Build material ID map - need to match material names to IDs
-      const materialIdMap: { [key: string]: string } = {
-        [wallBase.name]: wallBase.id,
-        [roofBase.name]: roofBase.id,
-        [floorBase.name]: floorBase.id,
-        [windowType.name]: windowType.id,
-      };
-
-      // Add optional materials
-      if (wallInsulation) materialIdMap[wallInsulation.name] = wallInsulation.id;
-      if (roofInsulation) materialIdMap[roofInsulation.name] = roofInsulation.id;
-      if (floorInsulation) materialIdMap[floorInsulation.name] = floorInsulation.id;
 
       const materials = {
         wall_base: wallBase.id,
@@ -520,13 +480,21 @@ const fetchVisualRecommendations = async () => {
         throw new Error(`Sustainability analysis failed: ${errorText}`);
       }
 
-      const sustainabilityData = await response.json();
+      const sustainabilityData: SustainabilityApiResponse = await response.json();
       console.log("ML Sustainability analysis received:", sustainabilityData);
       setMlSustainabilityScore(sustainabilityData);
       
-      // Extract room-by-room analysis if available
-      if (sustainabilityData && sustainabilityData.summary) {
-        setRoomByRoomAnalysis(sustainabilityData);
+      if (
+        sustainabilityData?.status === "success"
+        && sustainabilityData.summary
+        && sustainabilityData.rooms
+      ) {
+        setRoomByRoomAnalysis({
+          summary: sustainabilityData.summary,
+          rooms: sustainabilityData.rooms,
+        });
+      } else {
+        setRoomByRoomAnalysis(null);
       }
     } catch (err) {
       console.error("Error in ML sustainability analysis:", err);
@@ -581,60 +549,6 @@ const fetchVisualRecommendations = async () => {
     } finally {
       setExporting(false);
     }
-  };
-
-  // Helper function to render recommendation data
-  const renderRecommendationContent = (data: any, title: string, icon: string) => {
-    return (
-      <div style={{ padding: "20px" }}>
-        <h4>{icon} {title}</h4>
-        
-        {data ? (
-          <div>
-            {data.formatted && (
-              <div style={{ backgroundColor: "#f0f8f0", padding: "15px", borderRadius: "8px", marginBottom: "20px", whiteSpace: "pre-wrap", fontFamily: "monospace", fontSize: "14px" }}>
-                {data.formatted}
-              </div>
-            )}
-            
-            {data.recommendations && data.recommendations.length > 0 && (
-              <div style={{ marginTop: "20px" }}>
-                <h5>Detailed Recommendations ({data.total || data.recommendations.length})</h5>
-                <div style={{ display: "grid", gap: "15px" }}>
-                  {data.recommendations.map((rec: any, idx: number) => (
-                    <div key={idx} style={{ 
-                      border: "1px solid #ddd", 
-                      padding: "15px", 
-                      borderRadius: "8px",
-                      backgroundColor: "#fafafa"
-                    }}>
-                      <h6 style={{ marginTop: 0 }}>{rec.room} - {rec.category}</h6>
-                      {rec.impact && <p><strong>Impact:</strong> {rec.impact}</p>}
-                      {rec.issue && <p><strong>Issue:</strong> {rec.issue}</p>}
-                      {rec.recommendation && <p><strong>Recommendation:</strong> {rec.recommendation}</p>}
-                      {rec.priority && <p><strong>Priority:</strong> {rec.priority}</p>}
-                      {rec.triggers && rec.triggers.length > 0 && (
-                        <p><strong>Affects:</strong> {rec.triggers.join(", ")}</p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
-              <button onClick={() => setShowEditor(true)} style={{ padding: "10px 18px", borderRadius: "12px", border: "none", background: "#d1fae5", color: "#065f46", fontWeight: "600", cursor: "pointer" }}>Edit</button>
-              <button onClick={() => setMode('overview')} style={{ padding: "10px 18px", borderRadius: "12px", border: "none", background: "#d1fae5", color: "#065f46", fontWeight: "600", cursor: "pointer" }}>Back</button>
-            </div>
-          </div>
-        ) : (
-          <div>
-            <p>Click the button to generate {title.toLowerCase()}.</p>
-            <button onClick={() => setMode('overview')} style={{ padding: "10px 18px", borderRadius: "12px", border: "none", background: "#d1fae5", color: "#065f46", fontWeight: "600", cursor: "pointer" }}>Back</button>
-          </div>
-        )}
-      </div>
-    );
   };
 
   // Render thermal analysis UI
@@ -1022,541 +936,330 @@ const fetchVisualRecommendations = async () => {
   };
 
   const renderVisualContent = () => {
-  const getVisualColor = (score: number) => {
-    if (score >= 67) return "#4ECDC4";
-    if (score >= 34) return "#f59e0b";
-    return "#ef4444";
-  };
+    const getVisualColor = (score: number) => {
+      if (score >= 67) return "#4ECDC4";
+      if (score >= 34) return "#f59e0b";
+      return "#ef4444";
+    };
 
-  if (!visualScore) {
+    if (!visualScore) {
+      return (
+        <div style={{ padding: "20px", textAlign: "center" }}>
+          <p>Click "✨ Visual Comfort" to run the analysis.</p>
+          <button onClick={() => setMode("overview")}
+            style={{ padding: "10px 18px", borderRadius: "12px",
+              border: "none", background: "#d1fae5",
+              color: "#065f46", fontWeight: "600", cursor: "pointer" }}>
+            ← Back
+          </button>
+        </div>
+      );
+    }
+
+    const pct = visualScore.comfort_percentage;
+    const cls = visualScore.comfort_class;
+
     return (
-      <div style={{ padding: "20px", textAlign: "center" }}>
-        <p>Click "✨ Visual Comfort" to run the analysis.</p>
-        <button onClick={() => setMode("overview")}
-          style={{ padding: "10px 18px", borderRadius: "12px",
-            border: "none", background: "#d1fae5",
-            color: "#065f46", fontWeight: "600", cursor: "pointer" }}>
-          ← Back
-        </button>
+      <div style={{ padding: "20px", maxHeight: "90vh", overflowY: "auto" }}>
+        <h4>✨ Visual Comfort Analysis</h4>
+
+        {/* ── MAIN SCORE ── */}
+        <div style={{
+          backgroundColor: "#f0fbfa", padding: "25px", borderRadius: "12px",
+          border: `3px solid ${getVisualColor(pct)}`,
+          marginBottom: "20px", textAlign: "center"
+        }}>
+          <div style={{
+            fontSize: "48px", fontWeight: "bold",
+            color: getVisualColor(pct), marginBottom: "10px"
+          }}>
+            {pct.toFixed(1)}%
+          </div>
+          <div style={{ fontSize: "18px", fontWeight: "600",
+            color: "#065f46", marginBottom: "8px" }}>
+            Comfort Class: <span style={{ color: getVisualColor(pct) }}>{cls}</span>
+          </div>
+          <p style={{ margin: 0, color: "#666", fontSize: "14px" }}>
+            {visualScore.analysis?.[0]}
+          </p>
+        </div>
+
+        {/* ── METRICS ── */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr",
+          gap: "15px", marginBottom: "20px" }}>
+          {Object.values(visualScore.metrics as Record<string, any>).map(
+            (m: any, i: number) => (
+            <div key={i} style={{
+              backgroundColor: "#e5f5f0", padding: "15px",
+              borderRadius: "8px", border: "1px solid #a7f3d0"
+            }}>
+              <h5 style={{ marginTop: 0, color: "#065f46", fontSize: "13px" }}>
+                {m.label}
+              </h5>
+              <p style={{ margin: "5px 0", fontSize: "18px", fontWeight: "bold" }}>
+                {typeof m.value === "number" ? m.value.toFixed(1) : m.value}
+                {m.unit ? ` ${m.unit}` : ""}
+              </p>
+              <p style={{ margin: "3px 0", fontSize: "11px", color: "#666" }}>
+                Target: {m.target}
+              </p>
+              <p style={{ margin: "3px 0", fontSize: "12px",
+                color: m.status.includes("Optimal") || 
+                       m.status.includes("Imperceptible") ||
+                       m.status.includes("Comfortable") ||
+                       m.status.includes("Excellent") ? "#065f46" : "#b45309"
+              }}>
+                {m.status}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* ── GEOMETRY ── */}
+        <div style={{
+          backgroundColor: "#ecfdf5", padding: "15px", borderRadius: "8px",
+          border: "2px solid #a7f3d0", marginBottom: "20px"
+        }}>
+          <h5 style={{ marginTop: 0, color: "#065f46" }}>🏠 Floor Plan Geometry</h5>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr",
+            gap: "8px", fontSize: "13px" }}>
+            <p style={{ margin: "4px 0" }}>
+              <strong>Floor Area:</strong> {visualScore.geometry.total_area_m2} m²
+            </p>
+            <p style={{ margin: "4px 0" }}>
+              <strong>Window Area:</strong> {visualScore.geometry.total_window_area_m2} m²
+            </p>
+            <p style={{ margin: "4px 0" }}>
+              <strong>WWR:</strong> {visualScore.geometry.wwr_percent}%
+            </p>
+            <p style={{ margin: "4px 0" }}>
+              <strong>Windows / Rooms:</strong> {visualScore.geometry.num_windows} / {visualScore.geometry.num_rooms}
+            </p>
+            <p style={{ margin: "4px 0" }}>
+              <strong>Avg Window Size:</strong> {visualScore.geometry.avg_window_area_m2} m²
+            </p>
+            <p style={{ margin: "4px 0" }}>
+              <strong>Windows per Room:</strong> {visualScore.geometry.windows_per_room}
+            </p>
+          </div>
+        </div>
+
+        {/* ── ANALYSIS REPORT ── */}
+        <div style={{
+          backgroundColor: "#f8fafc", padding: "15px", borderRadius: "8px",
+          border: "1px solid #cbd5e1", marginBottom: "20px"
+        }}>
+          <h5 style={{ marginTop: 0, color: "#1e293b" }}>📋 Analysis Report</h5>
+          {visualScore.analysis?.slice(1).map((line: string, i: number) => (
+            <div key={i} style={{
+              padding: "10px", marginBottom: "8px", borderRadius: "6px",
+              backgroundColor: "#fff", border: "1px solid #e2e8f0",
+              fontSize: "13px", color: "#374151"
+            }}>
+              {line}
+            </div>
+          ))}
+        </div>
+
+        {/* Show recommendations or the view recommendations button */}
+        {showVisualRecs ? (
+          renderVisualRecommendations()
+        ) : (
+          <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
+            <button onClick={() => setMode("overview")}
+              style={{
+                padding: "10px 18px", borderRadius: "12px",
+                border: "none", background: "#d1fae5",
+                color: "#065f46", fontWeight: "600", cursor: "pointer"
+              }}>
+              ← Back
+            </button>
+            <button
+              onClick={fetchVisualRecommendations}
+              disabled={visualRecsLoading}
+              style={{
+                padding: "10px 24px", borderRadius: "12px",
+                border: "none",
+                background: visualRecsLoading ? "#ccc" : "#065f46",
+                color: "#fff", fontWeight: "600",
+                cursor: visualRecsLoading ? "not-allowed" : "pointer"
+              }}>
+              {visualRecsLoading ? "Loading..." : "✨ View Recommendations"}
+            </button>
+          </div>
+        )}
       </div>
     );
-  }
-
-  const pct = visualScore.comfort_percentage;
-  const cls = visualScore.comfort_class;
-
-  return (
-    <div style={{ padding: "20px", maxHeight: "90vh", overflowY: "auto" }}>
-      <h4>✨ Visual Comfort Analysis</h4>
-
-      {/* ── MAIN SCORE ── */}
-      <div style={{
-        backgroundColor: "#f0fbfa", padding: "25px", borderRadius: "12px",
-        border: `3px solid ${getVisualColor(pct)}`,
-        marginBottom: "20px", textAlign: "center"
-      }}>
-        <div style={{
-          fontSize: "48px", fontWeight: "bold",
-          color: getVisualColor(pct), marginBottom: "10px"
-        }}>
-          {pct.toFixed(1)}%
-        </div>
-        <div style={{ fontSize: "18px", fontWeight: "600",
-          color: "#065f46", marginBottom: "8px" }}>
-          Comfort Class: <span style={{ color: getVisualColor(pct) }}>{cls}</span>
-        </div>
-        <p style={{ margin: 0, color: "#666", fontSize: "14px" }}>
-          {visualScore.analysis?.[0]}
-        </p>
-      </div>
-
-      {/* ── METRICS ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr",
-        gap: "15px", marginBottom: "20px" }}>
-        {Object.values(visualScore.metrics as Record<string, any>).map(
-          (m: any, i: number) => (
-          <div key={i} style={{
-            backgroundColor: "#e5f5f0", padding: "15px",
-            borderRadius: "8px", border: "1px solid #a7f3d0"
-          }}>
-            <h5 style={{ marginTop: 0, color: "#065f46", fontSize: "13px" }}>
-              {m.label}
-            </h5>
-            <p style={{ margin: "5px 0", fontSize: "18px", fontWeight: "bold" }}>
-              {typeof m.value === "number" ? m.value.toFixed(1) : m.value}
-              {m.unit ? ` ${m.unit}` : ""}
-            </p>
-            <p style={{ margin: "3px 0", fontSize: "11px", color: "#666" }}>
-              Target: {m.target}
-            </p>
-            <p style={{ margin: "3px 0", fontSize: "12px",
-              color: m.status.includes("Optimal") || 
-                     m.status.includes("Imperceptible") ||
-                     m.status.includes("Comfortable") ||
-                     m.status.includes("Excellent") ? "#065f46" : "#b45309"
-            }}>
-              {m.status}
-            </p>
-          </div>
-        ))}
-      </div>
-
-      {/* ── GEOMETRY ── */}
-      <div style={{
-        backgroundColor: "#ecfdf5", padding: "15px", borderRadius: "8px",
-        border: "2px solid #a7f3d0", marginBottom: "20px"
-      }}>
-        <h5 style={{ marginTop: 0, color: "#065f46" }}>🏠 Floor Plan Geometry</h5>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr",
-          gap: "8px", fontSize: "13px" }}>
-          <p style={{ margin: "4px 0" }}>
-            <strong>Floor Area:</strong> {visualScore.geometry.total_area_m2} m²
-          </p>
-          <p style={{ margin: "4px 0" }}>
-            <strong>Window Area:</strong> {visualScore.geometry.total_window_area_m2} m²
-          </p>
-          <p style={{ margin: "4px 0" }}>
-            <strong>WWR:</strong> {visualScore.geometry.wwr_percent}%
-          </p>
-          <p style={{ margin: "4px 0" }}>
-            <strong>Windows / Rooms:</strong> {visualScore.geometry.num_windows} / {visualScore.geometry.num_rooms}
-          </p>
-          <p style={{ margin: "4px 0" }}>
-            <strong>Avg Window Size:</strong> {visualScore.geometry.avg_window_area_m2} m²
-          </p>
-          <p style={{ margin: "4px 0" }}>
-            <strong>Windows per Room:</strong> {visualScore.geometry.windows_per_room}
-          </p>
-        </div>
-      </div>
-
-      {/* ── ANALYSIS REPORT ── */}
-      <div style={{
-        backgroundColor: "#f8fafc", padding: "15px", borderRadius: "8px",
-        border: "1px solid #cbd5e1", marginBottom: "20px"
-      }}>
-        <h5 style={{ marginTop: 0, color: "#1e293b" }}>📋 Analysis Report</h5>
-        {visualScore.analysis?.slice(1).map((line: string, i: number) => (
-          <div key={i} style={{
-            padding: "10px", marginBottom: "8px", borderRadius: "6px",
-            backgroundColor: "#fff", border: "1px solid #e2e8f0",
-            fontSize: "13px", color: "#374151"
-          }}>
-            {line}
-          </div>
-        ))}
-      </div>
-
-      {/* Show recommendations or the view recommendations button */}
-{showVisualRecs ? (
-  renderVisualRecommendations()
-) : (
-  <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
-    <button onClick={() => setMode("overview")}
-      style={{
-        padding: "10px 18px", borderRadius: "12px",
-        border: "none", background: "#d1fae5",
-        color: "#065f46", fontWeight: "600", cursor: "pointer"
-      }}>
-      ← Back
-    </button>
-    <button
-      onClick={fetchVisualRecommendations}
-      disabled={visualRecsLoading}
-      style={{
-        padding: "10px 24px", borderRadius: "12px",
-        border: "none",
-        background: visualRecsLoading ? "#ccc" : "#065f46",
-        color: "#fff", fontWeight: "600",
-        cursor: visualRecsLoading ? "not-allowed" : "pointer"
-      }}>
-      {visualRecsLoading ? "Loading..." : "✨ View Recommendations"}
-    </button>
-  </div>
-)}
-</div>
-  );
-};
-
-const renderVisualRecommendations = () => {
-  if (!visualRecs) return null;
-
-  const getScoreColor = (score: number) => {
-    if (score >= 67) return "#4ECDC4";
-    if (score >= 34) return "#f59e0b";
-    return "#ef4444";
   };
 
-  return (
-    <div style={{ marginTop: "20px" }}>
-      <h4>✨ Visual Improvement Scenarios</h4>
+  // إرجاع ميثود الـ Visual الفولدر المفقود لحل إيرور الـ الـ Compile
+  const renderVisualRecommendations = () => {
+    if (!visualRecs) return null;
 
-      {/* Main issue box */}
-      {visualRecs.has_recommendations && (
-        <div style={{
-          backgroundColor: "#fef9c3",
-          padding: "15px",
-          borderRadius: "8px",
-          border: "1px solid #fcd34d",
-          marginBottom: "16px"
-        }}>
-          <p style={{ margin: 0, fontWeight: "600", color: "#78350f" }}>
-            Main Issue: {visualRecs.main_issue}
-          </p>
-        </div>
-      )}
+    const getScoreColor = (score: number) => {
+      if (score >= 67) return "#4ECDC4";
+      if (score >= 34) return "#f59e0b";
+      return "#ef4444";
+    };
 
-      {/* No recommendations case */}
-      {!visualRecs.has_recommendations && (
-        <div style={{
-          backgroundColor: "#fce7e7",
-          padding: "15px",
-          borderRadius: "8px",
-          border: "1px solid #fca5a5",
-          marginBottom: "16px"
-        }}>
-          <p style={{ margin: 0, color: "#7f1d1d" }}>
-            {visualRecs.message}
-          </p>
-        </div>
-      )}
+    return (
+      <div style={{ marginTop: "20px" }}>
+        <h4>✨ Visual Improvement Scenarios</h4>
 
-      {/* Scenarios */}
-      {visualRecs.scenarios?.map((scenario: any, i: number) => (
-        <div key={i} style={{
-          backgroundColor: "#f0fdf4",
-          padding: "18px",
-          borderRadius: "10px",
-          border: "2px solid #86efac",
-          marginBottom: "14px"
-        }}>
-          <h5 style={{ marginTop: 0, color: "#166534" }}>
-            {i + 1}. {scenario.fix}
-          </h5>
-          <p style={{ color: "#374151", fontSize: "13px", marginBottom: "14px" }}>
-            {scenario.description}
-          </p>
-
-          {/* Score comparison */}
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "12px",
-            marginBottom: "12px"
-          }}>
-            <div style={{
-              backgroundColor: "#fff",
-              padding: "12px",
-              borderRadius: "8px",
-              textAlign: "center",
-              border: "1px solid #d1d5db"
-            }}>
-              <p style={{ margin: "0 0 4px 0", fontSize: "12px", color: "#6b7280" }}>
-                Current Score
-              </p>
-              <p style={{
-                margin: 0,
-                fontSize: "24px",
-                fontWeight: "bold",
-                color: getScoreColor(visualRecs.current_score)
-              }}>
-                {visualRecs.current_score.toFixed(1)}%
-              </p>
-              <p style={{ margin: "4px 0 0 0", fontSize: "12px", color: "#6b7280" }}>
-                {visualRecs.current_class}
-              </p>
-            </div>
-
-            <div style={{
-              backgroundColor: "#fff",
-              padding: "12px",
-              borderRadius: "8px",
-              textAlign: "center",
-              border: "2px solid #4ECDC4"
-            }}>
-              <p style={{ margin: "0 0 4px 0", fontSize: "12px", color: "#6b7280" }}>
-                Projected Score
-              </p>
-              <p style={{
-                margin: 0,
-                fontSize: "24px",
-                fontWeight: "bold",
-                color: getScoreColor(scenario.projected_score)
-              }}>
-                {scenario.projected_score.toFixed(1)}%
-              </p>
-              <p style={{ margin: "4px 0 0 0", fontSize: "12px", color: "#059669" }}>
-                +{scenario.score_change}% improvement
-              </p>
-            </div>
+        {visualRecs.has_recommendations && (
+          <div style={{ backgroundColor: "#fef9c3", padding: "15px", borderRadius: "8px", border: "1px solid #fcd34d", marginBottom: "16px" }}>
+            <p style={{ margin: 0, fontWeight: "600", color: "#78350f" }}>Main Issue: {visualRecs.main_issue}</p>
           </div>
+        )}
 
-          {/* Projected metrics */}
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(4, 1fr)",
-            gap: "8px",
-            fontSize: "11px"
-          }}>
-            {[
-              { label: "Lux", value: `${scenario.projected_lux} lux` },
-              { label: "DGI", value: scenario.projected_dgi },
-              { label: "CCT", value: `${scenario.projected_cct}K` },
-              { label: "View", value: `${scenario.projected_view}/100` }
-            ].map((m, j) => (
-              <div key={j} style={{
-                backgroundColor: "#ecfdf5",
-                padding: "8px",
-                borderRadius: "6px",
-                textAlign: "center"
-              }}>
-                <p style={{ margin: "0 0 2px 0", color: "#6b7280" }}>{m.label}</p>
-                <p style={{ margin: 0, fontWeight: "600", color: "#065f46" }}>
-                  {m.value}
-                </p>
+        {!visualRecs.has_recommendations && (
+          <div style={{ backgroundColor: "#fce7e7", padding: "15px", borderRadius: "8px", border: "1px solid #fca5a5", marginBottom: "16px" }}>
+            <p style={{ margin: 0, color: "#7f1d1d" }}>{visualRecs.message}</p>
+          </div>
+        )}
+
+        {visualRecs.scenarios?.map((scenario: any, i: number) => (
+          <div key={i} style={{ backgroundColor: "#f0fdf4", padding: "18px", borderRadius: "10px", border: "2px solid #86efac", marginBottom: "14px" }}>
+            <h5 style={{ marginTop: 0, color: "#166534" }}>{i + 1}. {scenario.fix}</h5>
+            <p style={{ color: "#374151", fontSize: "13px", marginBottom: "14px" }}>{scenario.description}</p>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
+              <div style={{ backgroundColor: "#fff", padding: "12px", borderRadius: "8px", textAlign: "center", border: "1px solid #d1d5db" }}>
+                <p style={{ margin: "0 0 4px 0", fontSize: "12px", color: "#6b7280" }}>Current Score</p>
+                <p style={{ margin: 0, fontSize: "24px", fontWeight: "bold", color: getScoreColor(visualRecs.current_score) }}>{visualRecs.current_score.toFixed(1)}%</p>
+                <p style={{ margin: "4px 0 0 0", fontSize: "12px", color: "#6b7280" }}>{visualRecs.current_class}</p>
               </div>
-            ))}
+
+              <div style={{ backgroundColor: "#fff", padding: "12px", borderRadius: "8px", textAlign: "center", border: "2px solid #4ECDC4" }}>
+                <p style={{ margin: "0 0 4px 0", fontSize: "12px", color: "#6b7280" }}>Projected Score</p>
+                <p style={{ margin: 0, fontSize: "24px", fontWeight: "bold", color: getScoreColor(scenario.projected_score) }}>{scenario.projected_score.toFixed(1)}%</p>
+                <p style={{ margin: "4px 0 0 0", fontSize: "12px", color: "#059669" }}>+{scenario.score_change}% improvement</p>
+              </div>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px", fontSize: "11px" }}>
+              {[
+                { label: "Lux", value: `${scenario.projected_lux} lux` },
+                { label: "DGI", value: scenario.projected_dgi },
+                { label: "CCT", value: `${scenario.projected_cct}K` },
+                { label: "View", value: `${scenario.projected_view}/100` }
+              ].map((m, j) => (
+                <div key={j} style={{ backgroundColor: "#ecfdf5", padding: "8px", borderRadius: "6px", textAlign: "center" }}>
+                  <p style={{ margin: "0 0 2px 0", color: "#6b7280" }}>{m.label}</p>
+                  <p style={{ margin: 0, fontWeight: "600", color: "#065f46" }}>{m.value}</p>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
 
-      <button
-        onClick={() => setShowVisualRecs(false)}
-        style={{
-          padding: "10px 18px",
-          borderRadius: "12px",
-          border: "none",
-          background: "#d1fae5",
-          color: "#065f46",
-          fontWeight: "600",
-          cursor: "pointer",
-          marginTop: "8px"
-        }}
-      >
-        ← Back to Analysis
-      </button>
-    </div>
-  );
-};
+        <button onClick={() => setShowVisualRecs(false)} style={{ padding: "10px 18px", borderRadius: "12px", border: "none", background: "#d1fae5", color: "#065f46", fontWeight: "600", cursor: "pointer", marginTop: "8px" }}>← Back to Analysis</button>
+      </div>
+    );
+  };
 
-  // Render room-by-room analysis with visual comparisons
+  // ── تفريغ الـ 3 البدائل التنافسية لكل غرفة منفصلة تماماً بدون أي هارد كود للـ Total Carbon ──
   const renderRoomByRoomAnalysis = () => {
     if (!roomByRoomAnalysis) return null;
 
-    const { summary, rooms } = roomByRoomAnalysis;
+    const { rooms } = roomByRoomAnalysis;
 
     return (
       <div style={{
         backgroundColor: "#f8fafc",
         padding: "20px",
         borderRadius: "12px",
-        border: "2px solid #e2e8f0",
+        border: "2px solid #cbd5e1",
         marginTop: "20px"
       }}>
-        <h5 style={{ marginTop: 0, color: "#1e293b", display: "flex", alignItems: "center", gap: "8px" }}>
+        <h5 style={{ marginTop: 0, color: "#0f172a", fontSize: "18px", fontWeight: "700", borderBottom: "2px solid #e2e8f0", paddingBottom: "10px", marginBottom: "20px" }}>
           🏗️ Room-by-Room Carbon Analysis
         </h5>
 
-        {/* Summary Stats */}
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-          gap: "12px",
-          marginBottom: "20px"
-        }}>
-          <div style={{
-            backgroundColor: "#dcfce7",
-            padding: "15px",
-            borderRadius: "8px",
-            border: "1px solid #86efac"
-          }}>
-            <p style={{ margin: "0 0 4px 0", fontSize: "12px", color: "#166534", fontWeight: "500" }}>
-              Your Total Carbon
-            </p>
-            <p style={{ margin: "0", fontSize: "24px", fontWeight: "bold", color: "#15803d" }}>
-              {summary.your_total_carbon.toFixed(0)} kg CO₂
-            </p>
-          </div>
-
-          <div style={{
-            backgroundColor: "#dbeafe",
-            padding: "15px",
-            borderRadius: "8px",
-            border: "1px solid #93c5fd"
-          }}>
-            <p style={{ margin: "0 0 4px 0", fontSize: "12px", color: "#0c4a6e", fontWeight: "500" }}>
-              Optimized Carbon
-            </p>
-            <p style={{ margin: "0", fontSize: "24px", fontWeight: "bold", color: "#0369a1" }}>
-              {summary.optimized_total_carbon.toFixed(0)} kg CO₂
-            </p>
-          </div>
-
-          <div style={{
-            backgroundColor: "#fef3c7",
-            padding: "15px",
-            borderRadius: "8px",
-            border: "1px solid #fcd34d"
-          }}>
-            <p style={{ margin: "0 0 4px 0", fontSize: "12px", color: "#78350f", fontWeight: "500" }}>
-              Total Savings
-            </p>
-            <p style={{ margin: "0", fontSize: "24px", fontWeight: "bold", color: "#d97706" }}>
-              {summary.total_savings.toFixed(0)} kg CO₂
-            </p>
-          </div>
-
-          <div style={{
-            backgroundColor: "#fecdd3",
-            padding: "15px",
-            borderRadius: "8px",
-            border: "1px solid #fca5a5"
-          }}>
-            <p style={{ margin: "0 0 4px 0", fontSize: "12px", color: "#7f1d1d", fontWeight: "500" }}>
-              Reduction
-            </p>
-            <p style={{ margin: "0", fontSize: "24px", fontWeight: "bold", color: "#991b1b" }}>
-              {summary.reduction_percent.toFixed(1)}%
-            </p>
-          </div>
-        </div>
-
-        {/* Room Cards */}
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-          gap: "15px"
-        }}>
+        {/* Room List Loop - كل غرفة تظهر كـ زون منفصل كامل وبداخله الـ 3 بدائل التنافسية للغرفة دي بس */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "30px" }}>
           {rooms.map((room, idx) => (
             <div key={idx} style={{
               backgroundColor: "#fff",
-              padding: "15px",
-              borderRadius: "8px",
-              border: "1px solid #e2e8f0",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
+              padding: "25px",
+              borderRadius: "12px",
+              border: "1px solid #cbd5e1",
+              boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)"
             }}>
-              <h6 style={{ margin: "0 0 12px 0", color: "#1e293b", fontSize: "16px", fontWeight: "600" }}>
-                📍 {room.room}
-              </h6>
-
-              <p style={{ margin: "0 0 12px 0", fontSize: "13px", color: "#64748b" }}>
+              <h4 style={{ margin: "0 0 6px 0", color: "#1e3a8a", fontSize: "18px", fontWeight: "800" }}>
+                ROOM: {room.room}
+              </h4>
+              <p style={{ margin: "0 0 20px 0", fontSize: "14px", color: "#475569", borderBottom: "1px dashed #e2e8f0", paddingBottom: "10px" }}>
                 <strong>Area:</strong> {room.area_m2} m²
               </p>
 
-              {/* Carbon Comparison Bar */}
-              <div style={{ marginBottom: "15px" }}>
-                <p style={{ margin: "0 0 6px 0", fontSize: "12px", color: "#475569", fontWeight: "500" }}>
-                  Carbon Comparison
-                </p>
-
-                {/* Your Selection */}
-                <div style={{ marginBottom: "8px" }}>
-                  <div style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    marginBottom: "4px"
-                  }}>
-                    <span style={{ fontSize: "12px", color: "#64748b" }}>Your Selection</span>
-                    <span style={{ fontSize: "12px", fontWeight: "600", color: "#d97706" }}>
-                      {room.your_selection.total_carbon_kg.toFixed(1)} kg CO₂
-                    </span>
-                  </div>
-                  <div style={{
-                    backgroundColor: "#fed7aa",
-                    height: "24px",
-                    borderRadius: "4px",
-                    width: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    padding: "0 6px",
-                    fontSize: "11px",
-                    fontWeight: "600",
-                    color: "#92400e"
-                  }}>
-                    {(room.your_selection.total_carbon_kg > 0 ? 
-                      ((room.your_selection.total_carbon_kg / Math.max(room.your_selection.total_carbon_kg, room.recommended_solution.total_carbon_kg)) * 100) 
-                      : 0).toFixed(0)}%
-                  </div>
-                </div>
-
-                {/* Recommended Solution */}
-                <div>
-                  <div style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    marginBottom: "4px"
-                  }}>
-                    <span style={{ fontSize: "12px", color: "#64748b" }}>Recommended</span>
-                    <span style={{ fontSize: "12px", fontWeight: "600", color: "#059669" }}>
-                      {room.recommended_solution.total_carbon_kg.toFixed(1)} kg CO₂
-                    </span>
-                  </div>
-                  <div style={{
-                    backgroundColor: "#a7f3d0",
-                    height: "24px",
-                    borderRadius: "4px",
-                    width: ((room.recommended_solution.total_carbon_kg / Math.max(room.your_selection.total_carbon_kg, room.recommended_solution.total_carbon_kg)) * 100) + "%",
-                    display: "flex",
-                    alignItems: "center",
-                    padding: "0 6px",
-                    fontSize: "11px",
-                    fontWeight: "600",
-                    color: "#065f46"
-                  }}>
-                    {(room.recommended_solution.total_carbon_kg > 0 ?
-                      ((room.recommended_solution.total_carbon_kg / Math.max(room.your_selection.total_carbon_kg, room.recommended_solution.total_carbon_kg)) * 100)
-                      : 0).toFixed(0)}%
-                  </div>
+              {/* BEFORE PANEL — User Selection Baseline */}
+              <div style={{ backgroundColor: "#f8fafc", padding: "15px 20px", borderRadius: "8px", border: "1px solid #e2e8f0", marginBottom: "20px" }}>
+                <span style={{ fontWeight: "700", color: "#334155", fontSize: "13px", display: "block", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                  BEFORE — User Selection
+                </span>
+                <div style={{ display: "flex", gap: "25px", fontSize: "13px", color: "#1e293b", fontWeight: "600", marginBottom: "4px" }}>
+                  <span>Carbon : <span style={{ color: "#b91c1c" }}>{room.your_selection.total_carbon_kg.toFixed(2)} kg CO2</span></span>
+                  {room.your_selection.avg_comfort !== undefined && (
+                    <span>Comfort: <span style={{ color: "#2563eb" }}>{room.your_selection.avg_comfort.toFixed(3)} / 1</span></span>
+                  )}
                 </div>
               </div>
 
-              {/* Savings Info */}
-              <div style={{
-                backgroundColor: "#fef3c7",
-                padding: "10px",
-                borderRadius: "6px",
-                border: "1px solid #fcd34d"
-              }}>
-                <p style={{ margin: "0 0 4px 0", fontSize: "12px", color: "#78350f", fontWeight: "600" }}>
-                  💚 Carbon Savings
-                </p>
-                <p style={{ margin: "0", fontSize: "16px", fontWeight: "bold", color: "#d97706" }}>
-                  {room.carbon_savings.saved_kg.toFixed(1)} kg CO₂
-                </p>
-                <p style={{ margin: "4px 0 0 0", fontSize: "11px", color: "#78350f" }}>
-                  {room.carbon_savings.reduction_percent.toFixed(1)}% reduction
-                </p>
+              {/* AFTER PANEL — AI Recommendations #1, #2, #3 Breakdown */}
+              <div style={{ paddingLeft: "15px", borderLeft: "4px solid #2563eb" }}>
+                <span style={{ fontWeight: "700", color: "#1e3a8a", fontSize: "13px", display: "block", marginBottom: "12px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                  AFTER — AI Recommendations
+                </span>
+
+                {room.recommendations && room.recommendations.length > 0 ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                    {room.recommendations.map((rec, rIdx) => (
+                      <div key={rIdx} style={{
+                        backgroundColor: "#fff",
+                        padding: "16px 20px",
+                        borderRadius: "8px",
+                        border: "1px solid #e2e8f0",
+                        boxShadow: "0 1px 2px rgba(0,0,0,0.02)"
+                      }}>
+                        <span style={{ fontWeight: "700", color: "#2563eb", fontSize: "13px", display: "block", marginBottom: "8px" }}>
+                          Recommendation #{rIdx + 1}
+                        </span>
+                        <div style={{ borderTop: "1px dashed #cbd5e1", marginBottom: "12px" }} />
+                        
+                        {/* Assembly Layer Specs */}
+                        <div style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "13px", color: "#334155", marginBottom: "12px" }}>
+                          <div><strong style={{ color: "#475569" }}>Wall :</strong> {rec.after.materials.wall?.name || "N/A"}</div>
+                          <div><strong style={{ color: "#475569" }}>Floor :</strong> {rec.after.materials.floor?.name || "N/A"}</div>
+                          <div><strong style={{ color: "#475569" }}>Ceiling :</strong> {rec.after.materials.ceiling?.name || "N/A"}</div>
+                        </div>
+
+                        {/* Exact Values Readout */}
+                        <div style={{ display: "flex", gap: "25px", fontSize: "13px", color: "#0f172a", fontWeight: "600", backgroundColor: "#f8fafc", padding: "10px 15px", borderRadius: "6px", border: "1px solid #f1f5f9", marginBottom: "12px" }}>
+                          <span>Carbon : {rec.after.total_carbon.toFixed(2)} kg CO2</span>
+                          <span>Comfort : {rec.after.avg_comfort.toFixed(3)} / 1</span>
+                          <span>Score : {rec.after.final_score.toFixed(3)}</span>
+                        </div>
+
+                        {/* Comparative Vectors Block */}
+                        <div style={{ paddingLeft: "10px", borderLeft: "2px solid #cbd5e1", fontSize: "12px", color: "#475569" }}>
+                          <span style={{ fontWeight: "700", color: "#64748b", display: "block", marginBottom: "4px" }}>Comparison:</span>
+                          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "6px" }}>
+                            <div>Carbon Saved : <span style={{ color: "#16a34a", fontWeight: "700" }}>{rec.comparison.carbon_saved_kg.toFixed(2)} kg CO2</span></div>
+                            <div>Carbon Reduction : <span style={{ color: "#16a34a", fontWeight: "700" }}>{rec.comparison.carbon_reduction_pct.toFixed(2)}%</span></div>
+                            <div>Comfort Change : <span style={{ color: rec.comparison.comfort_change >= 0 ? "#16a34a" : "#dc2626", fontWeight: "600" }}>{rec.comparison.comfort_change.toFixed(3)}</span></div>
+                            <div>Comfort Status : <span style={{ color: rec.comparison.comfort_status === "reduced" ? "#dc2626" : "#16a34a", fontWeight: "700", textTransform: "capitalize" }}>{rec.comparison.comfort_status}</span></div>
+                          </div>
+                        </div>
+
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p style={{ fontSize: "13px", color: "#94a3b8", fontStyle: "italic" }}>No configurations passed structural Pareto optimization checks.</p>
+                )}
               </div>
 
-              {/* Material Details */}
-              <div style={{ marginTop: "12px" }}>
-                <p style={{ margin: "0 0 6px 0", fontSize: "12px", color: "#475569", fontWeight: "500" }}>
-                  Material Changes
-                </p>
-
-                <div style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: "8px",
-                  fontSize: "11px"
-                }}>
-                  {Object.entries(room.your_selection.materials).map(([surface, material]: any) => (
-                    <div key={surface}>
-                      <div style={{ color: "#64748b", marginBottom: "2px" }}>
-                        <strong>{surface}:</strong>
-                      </div>
-                      <div style={{ color: "#94a3b8", fontSize: "10px", marginBottom: "4px" }}>
-                        ❌ {material.name}
-                      </div>
-                      <div style={{ color: "#10b981", fontSize: "10px" }}>
-                        ✅ {room.recommended_solution.materials[surface]?.name || "N/A"}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
           ))}
         </div>
@@ -1620,100 +1323,9 @@ const renderVisualRecommendations = () => {
       );
     }
 
-    const currentCarbon = calculateTotalCarbonFromSelection();
-
     return (
       <div style={{ padding: "20px", maxHeight: "90vh", overflowY: "auto" }}>
         <h4>🌿 Sustainability & Carbon Analysis</h4>
-
-        {/* PART 1: CURRENT MATERIALS CARBON */}
-        <div style={{
-          backgroundColor: "#f0fdf4",
-          padding: "20px",
-          borderRadius: "12px",
-          border: "2px solid #86efac",
-          marginBottom: "25px"
-        }}>
-          <h5 style={{ marginTop: 0, color: "#166534", display: "flex", alignItems: "center", gap: "8px" }}>
-            📊 Part 1: Current Material Selection
-          </h5>
-
-          <div style={{
-            backgroundColor: "#fff7ed",
-            padding: "20px",
-            borderRadius: "8px",
-            marginBottom: "15px",
-            textAlign: "center"
-          }}>
-            <div style={{
-              fontSize: "40px",
-              fontWeight: "bold",
-              color: "#ea580c",
-              marginBottom: "8px"
-            }}>
-              {currentCarbon.toFixed(2)} kg CO₂/m²
-            </div>
-            <p style={{ margin: "5px 0", fontSize: "13px", color: "#78350f" }}>
-              Total Embodied Carbon from Manufacturing & Transport
-            </p>
-            <p style={{ margin: "0", fontSize: "11px", color: "#999", fontStyle: "italic" }}>
-              This represents lifecycle emissions from material production
-            </p>
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", fontSize: "12px" }}>
-            {wallBase && (
-              <div style={{ backgroundColor: "#f1f5fe", padding: "12px", borderRadius: "6px", border: "1px solid #bfdbfe" }}>
-                <p style={{ margin: "0 0 6px 0", fontWeight: "600", color: "#1e40af" }}>🧱 Wall Assembly</p>
-                <p style={{ margin: "2px 0", fontSize: "11px" }}>
-                  {wallBase.name}
-                  {wallInsulation ? ` + ${wallInsulation.name}` : ""}
-                </p>
-                <p style={{ margin: "5px 0 0 0", color: "#ea580c", fontWeight: "600", fontSize: "13px" }}>
-                  {(wallBase.carbon_kgCO2_per_m2 + (wallInsulation?.carbon_kgCO2_per_m2 || 0)).toFixed(2)} kg CO₂/m²
-                </p>
-              </div>
-            )}
-
-            {roofBase && (
-              <div style={{ backgroundColor: "#fef3c7", padding: "12px", borderRadius: "6px", border: "1px solid #fcd34d" }}>
-                <p style={{ margin: "0 0 6px 0", fontWeight: "600", color: "#92400e" }}>🏠 Roof Assembly</p>
-                <p style={{ margin: "2px 0", fontSize: "11px" }}>
-                  {roofBase.name}
-                  {roofInsulation ? ` + ${roofInsulation.name}` : ""}
-                </p>
-                <p style={{ margin: "5px 0 0 0", color: "#ea580c", fontWeight: "600", fontSize: "13px" }}>
-                  {(roofBase.carbon_kgCO2_per_m2 + (roofInsulation?.carbon_kgCO2_per_m2 || 0)).toFixed(2)} kg CO₂/m²
-                </p>
-              </div>
-            )}
-
-            {floorBase && (
-              <div style={{ backgroundColor: "#dbeafe", padding: "12px", borderRadius: "6px", border: "1px solid #7dd3fc" }}>
-                <p style={{ margin: "0 0 6px 0", fontWeight: "600", color: "#0c4a6e" }}>⬇️ Floor Assembly</p>
-                <p style={{ margin: "2px 0", fontSize: "11px" }}>
-                  {floorBase.name}
-                  {floorInsulation ? ` + ${floorInsulation.name}` : ""}
-                </p>
-                <p style={{ margin: "5px 0 0 0", color: "#ea580c", fontWeight: "600", fontSize: "13px" }}>
-                  {(floorBase.carbon_kgCO2_per_m2 + (floorInsulation?.carbon_kgCO2_per_m2 || 0)).toFixed(2)} kg CO₂/m²
-                </p>
-              </div>
-            )}
-
-            {windowType && (
-              <div style={{ backgroundColor: "#ede9fe", padding: "12px", borderRadius: "6px", border: "1px solid #ddd6fe" }}>
-                <p style={{ margin: "0 0 6px 0", fontWeight: "600", color: "#5b21b6" }}>🪟 Window Glazing</p>
-                <p style={{ margin: "2px 0", fontSize: "11px" }}>
-                  {windowType.name}
-                </p>
-                <p style={{ margin: "5px 0 0 0", color: "#ea580c", fontWeight: "600", fontSize: "13px" }}>
-                  {windowType.carbon_kgCO2_per_m2.toFixed(2)} kg CO₂/m²
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
 
         {/* PART 2: ML MODEL ANALYSIS */}
         <div style={{
@@ -1724,17 +1336,16 @@ const renderVisualRecommendations = () => {
           marginBottom: "25px"
         }}>
           <h5 style={{ marginTop: 0, color: "#1e40af", display: "flex", alignItems: "center", gap: "8px" }}>
-            🤖 Part 2: AI Sustainability Prediction
+            🤖 Sustainability Model Output
           </h5>
           <p style={{ color: "#666", fontSize: "13px", marginBottom: "15px" }}>
-            Use machine learning to predict material sustainability scores based on your selections and room data.
+            Results below are rendered directly from the backend sustainability function without frontend carbon calculations.
           </p>
 
           {mlSustainabilityScore ? (
             <div>
               {mlSustainabilityScore.summary ? (
                 <div>
-                  {/* Room-by-room analysis section is rendered separately below */}
                   <div style={{
                     backgroundColor: "#dcfce7",
                     padding: "15px",
@@ -1747,7 +1358,7 @@ const renderVisualRecommendations = () => {
                       ✅ Room-by-Room Analysis Complete
                     </p>
                     <p style={{ margin: "0", fontSize: "11px", color: "#166534" }}>
-                      See detailed recommendations below
+                      See detailed backend output below
                     </p>
                   </div>
                 </div>
@@ -1865,13 +1476,6 @@ const renderVisualRecommendations = () => {
       return total;
     };
 
-    const calculateCarbon = (base: Material | null, insulation: Material | null) => {
-      let total = 0;
-      if (base) total += base.carbon_kgCO2_per_m2;
-      if (insulation) total += insulation.carbon_kgCO2_per_m2;
-      return total;
-    };
-
     const isComplete = wallBase && roofBase && floorBase && windowType;
 
     return (
@@ -1940,9 +1544,6 @@ const renderVisualRecommendations = () => {
               <p style={{ margin: "5px 0" }}>
                 <strong>R-Value:</strong> {calculateRValue(wallBase, wallInsulation).toFixed(4)} m²K/W
               </p>
-              <p style={{ margin: "5px 0" }}>
-                <strong>Carbon:</strong> {calculateCarbon(wallBase, wallInsulation).toFixed(2)} kg CO₂/m²
-              </p>
             </div>
           )}
         </div>
@@ -2007,9 +1608,6 @@ const renderVisualRecommendations = () => {
             <div style={{ backgroundColor: "#e5f5f0", padding: "12px", borderRadius: "6px", fontSize: "13px" }}>
               <p style={{ margin: "5px 0" }}>
                 <strong>R-Value:</strong> {calculateRValue(roofBase, roofInsulation).toFixed(4)} m²K/W
-              </p>
-              <p style={{ margin: "5px 0" }}>
-                <strong>Carbon:</strong> {calculateCarbon(roofBase, roofInsulation).toFixed(2)} kg CO₂/m²
               </p>
             </div>
           )}
@@ -2076,9 +1674,6 @@ const renderVisualRecommendations = () => {
               <p style={{ margin: "5px 0" }}>
                 <strong>R-Value:</strong> {calculateRValue(floorBase, floorInsulation).toFixed(4)} m²K/W
               </p>
-              <p style={{ margin: "5px 0" }}>
-                <strong>Carbon:</strong> {calculateCarbon(floorBase, floorInsulation).toFixed(2)} kg CO₂/m²
-              </p>
             </div>
           )}
         </div>
@@ -2120,9 +1715,6 @@ const renderVisualRecommendations = () => {
               </p>
               <p style={{ margin: "5px 0" }}>
                 <strong>SHGC:</strong> {windowType.shgc}
-              </p>
-              <p style={{ margin: "5px 0" }}>
-                <strong>Carbon:</strong> {windowType.carbon_kgCO2_per_m2} kg CO₂/m²
               </p>
             </div>
           )}
@@ -2169,7 +1761,6 @@ const renderVisualRecommendations = () => {
             </div>
           )}
         </div>
-
 
       </div>
     );
@@ -2258,8 +1849,6 @@ const renderVisualRecommendations = () => {
           </div>
 
           <div className="design-preview">
-            {error && <div style={{ color: "red", padding: "10px" }}>❌ {error}</div>}
-            
             {mode === "overview" && (
               <div style={{ padding: "20px" }}>
                 <h4>Recommendations & Analysis</h4>

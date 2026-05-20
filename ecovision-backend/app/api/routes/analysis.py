@@ -1,13 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 from app.services.material_mapper import map_user_materials_to_values
 from app.services.thermal_comfort_engine import analyze_thermal_comfort
 from app.services.thermal_input_converter import convert_test_json_to_engine_features
 from app.services.analysis.sustainability_model import (
-    predict_sustainability_score, 
-    get_alternative_materials,
-    optimize_building_from_ids
+    optimize_building_from_ids,
+    optimize_building_with_user_materials,
+    run_building_optimization_test,
+    load_materials_from_csv
 )
 from app.services.auth_service import get_current_user
 from app.core.database import get_db
@@ -81,7 +82,6 @@ class SustainabilityAnalysisRequest(BaseModel):
 def get_climate_from_floorplan(floorplan: Floorplan) -> Dict:
     climate_data = load_climate_data()
 
-    # نحاول نجيب المدينة من JSON أو من المشروع
     json_data = floorplan.json_data or {}
 
     city = (
@@ -94,8 +94,8 @@ def get_climate_from_floorplan(floorplan: Floorplan) -> Dict:
         c = climate_data[city][0]
         return {
             "avg_temp": float(c["avg_temp"]),
-            "avg_humidity": float(c["avg_humidity"]),  # بدون تحويل
-            "avg_solar": float(c["avg_solar"]),        # بدون تحويل
+            "avg_humidity": float(c["avg_humidity"]),
+            "avg_solar": float(c["avg_solar"]),
         }
 
     # fallback (Cairo)
@@ -104,6 +104,16 @@ def get_climate_from_floorplan(floorplan: Floorplan) -> Dict:
         "avg_humidity": 54.91,
         "avg_solar": 245.26,
     }
+
+# ─────────────────────────────────────────────
+# WINDOW SURFACE KEYS — excluded from optimizer
+# The optimizer only handles wall / floor / ceiling
+# surfaces. Window-related keys are for the thermal
+# model only and must never be forwarded to the
+# sustainability optimizer.
+# ─────────────────────────────────────────────
+WINDOW_KEYS = {"window", "window_type", "window_base"}
+
 
 # -----------------------------
 # MAIN ENDPOINT
@@ -233,15 +243,15 @@ async def analyze_sustainability(
 ):
     """
     Analyze sustainability of material selections using trained ML model.
-    
+
     Takes material IDs and room data, returns sustainability scores and carbon footprint.
-    
+
     Args:
         floorplan_id: ID of the floorplan being analyzed
         materials: Dictionary mapping building elements to material IDs
                   e.g., {'wall_base': 'MAT001', 'wall_insulation': 'MAT037', ...}
         rooms: Optional list of room data from floorplan
-    
+
     Returns:
         Sustainability scores, carbon footprint breakdown, and alternative suggestions
     """
@@ -249,52 +259,71 @@ async def analyze_sustainability(
         logger.info(f"🔍 SUSTAINABILITY ANALYSIS REQUEST RECEIVED")
         logger.info(f"📌 Floorplan ID: {request.floorplan_id}")
         logger.info(f"📌 Materials: {request.materials}")
-        
+
         # Check authentication
         if not current_user:
             logger.warning("❌ Authentication failed: No current user")
             raise HTTPException(status_code=401, detail="Not authenticated")
-        
+
         # Fetch and validate floorplan
         floorplan = db.query(Floorplan).filter(
             Floorplan.id == request.floorplan_id
         ).first()
-        
+
         if not floorplan:
             raise HTTPException(status_code=404, detail="Floorplan not found")
-        
+
         # Verify ownership
         if not floorplan.project or floorplan.project.user_id != current_user.id:
             raise HTTPException(status_code=403, detail="Unauthorized")
-        
+
         # Get rooms from floorplan if not provided
         rooms = request.rooms
         if not rooms and floorplan.json_data:
             rooms = floorplan.json_data.get('rooms', [])
-        
+
         if not rooms:
             raise HTTPException(status_code=400, detail="No rooms data available for analysis")
-        
+
         logger.info(f"📊 Analyzing {len(rooms)} rooms with {len(request.materials)} materials")
-        
-        # Validate materials - filter out None values
-        valid_materials = {k: v for k, v in request.materials.items() if v is not None}
-        valid_material_ids = list(valid_materials.values())
-        
-        if not valid_material_ids:
+
+        # ── FIX 6: Filter materials for the optimizer ─────────────────
+        # Window keys and empty/None values are excluded.
+        # The optimizer only handles wall / floor / ceiling surfaces.
+        # We filter by KEY NAME (not by MAT number) so any window ID
+        # format is correctly excluded regardless of its prefix.
+        valid_materials = {}
+        for key, value in request.materials.items():
+            # Skip window-related keys entirely — the optimizer doesn't use them
+            if key.lower() in WINDOW_KEYS:
+                logger.info(f"   Skipping window key: {key}={value}")
+                continue
+
+            # Skip empty / None values
+            if value is None or value == "" or (isinstance(value, str) and value.upper() in ("NONE", "NULL")):
+                logger.info(f"   Skipping empty value for key: {key}")
+                continue
+
+            valid_materials[key] = value
+        # ─────────────────────────────────────────────────────────────
+
+        if not valid_materials:
             raise HTTPException(status_code=400, detail="No valid materials provided")
-        
-        # Run room-by-room optimization
-        result = optimize_building_from_ids(valid_material_ids, rooms)
-        
+
+        logger.info(f"📦 Valid materials for optimizer: {valid_materials}")
+
+        # Run room-by-room optimization with materials dictionary
+        # Request only 1 recommendation (single alternative) per room
+        result = optimize_building_with_user_materials(valid_materials, rooms, top_n=1)
+
         if result.get("status") == "error" or "error" in result:
             logger.error(f"❌ Optimization error: {result.get('error')}")
             raise HTTPException(status_code=400, detail=result.get("error", "Optimization failed"))
-        
+
         logger.info(f"✅ Room-by-room analysis completed for {len(result.get('rooms', []))} rooms")
-        
+
         return result
-    
+
     except HTTPException:
         raise
     except Exception as e:
@@ -303,6 +332,34 @@ async def analyze_sustainability(
             status_code=500,
             detail=f"Sustainability analysis error: {str(e)}"
         )
+
+
+@router.get("/sustainability/test")
+async def sustainability_test(
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user)
+):
+    """Run the internal model test harness and return its sample output.
+
+    This is provided as a developer helper so the frontend can request
+    the exact sample BEFORE/AFTER output the model produces.
+    """
+    try:
+        # Require simple auth check
+        if not current_user:
+            raise HTTPException(status_code=401, detail="Not authenticated")
+
+        result = run_building_optimization_test(debug=False)
+
+        if not result:
+            raise HTTPException(status_code=500, detail="Test run failed")
+
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Error running sustainability test", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ─────────────────────────────────────────────
@@ -426,4 +483,72 @@ async def thermal_recommendations(
         raise HTTPException(
             status_code=500,
             detail=f"Thermal recommendations error: {str(e)}"
+        )
+
+
+# ─────────────────────────────────────────────
+# MATERIALS ENDPOINT
+# ─────────────────────────────────────────────
+@router.get("/materials")
+async def get_materials(
+    current_user=Depends(get_current_user)
+):
+    """
+    Get all available materials from the database.
+    Returns materials with predictions for carbon footprint and thermal properties.
+    """
+    try:
+        materials_df = load_materials_from_csv()
+        
+        if materials_df is None:
+            raise HTTPException(status_code=500, detail="Failed to load materials database")
+        
+        # Convert to list of dictionaries for JSON serialization
+        materials_list = materials_df.to_dict('records')
+        
+        return {
+            "status": "success",
+            "total_materials": len(materials_list),
+            "materials": materials_list
+        }
+    
+    except Exception as e:
+        logger.error(f"❌ Error loading materials: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to load materials: {str(e)}"
+        )
+
+
+@router.post("/materials/by-category")
+async def get_materials_by_category(
+    category: Optional[str] = None,
+    current_user=Depends(get_current_user)
+):
+    """
+    Get materials filtered by category (brick, concrete, insulation, stone, etc.)
+    """
+    try:
+        materials_df = load_materials_from_csv()
+        
+        if materials_df is None:
+            raise HTTPException(status_code=500, detail="Failed to load materials database")
+        
+        if category:
+            materials_df = materials_df[materials_df["category"] == category]
+        
+        materials_list = materials_df.to_dict('records')
+        
+        return {
+            "status": "success",
+            "category": category,
+            "total_materials": len(materials_list),
+            "materials": materials_list
+        }
+    
+    except Exception as e:
+        logger.error(f"❌ Error loading materials by category: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to load materials: {str(e)}"
         )
