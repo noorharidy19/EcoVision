@@ -32,6 +32,8 @@
   font-weight: 600;
   font-size: 18px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
+  overflow: hidden;        /* ← keeps DXF canvas clipped to rounded corners */
+  position: relative;      /* ← needed for loading/error overlays to position correctly */
 }
 
 /* RIGHT SIDE */
@@ -84,7 +86,6 @@
   cursor: pointer;
 }
 
-
 .upload-box span {
   color: #059669;
   font-weight: 500;
@@ -106,6 +107,7 @@
 .create-btn:hover {
   background: #16a34a;
 }
+
 /* SELECT STYLE */
 .input-group select {
   padding: 14px 16px;
@@ -145,6 +147,7 @@
 .project-panel select {
   cursor: pointer;
 }
+
 /* RESPONSIVE */
 @media (max-width: 900px) {
   .create-layout {
