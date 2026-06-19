@@ -115,11 +115,17 @@
   border: 1px solid #e2e8f0;
   font-size: 15px;
   background: white;
+   color: #0f172a;
 }
 
 .input-group select:focus {
   outline: none;
   border-color: #34d399;
+}
+
+.input-group select option {
+  background-color: #ffffff;
+  color: #0f172a;
 }
 
 /* ADD ROOM BUTTON */

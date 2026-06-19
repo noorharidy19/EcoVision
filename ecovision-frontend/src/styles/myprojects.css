@@ -65,8 +65,18 @@
 }
 
 
+.card-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  justify-content: center;
+}
+
 .card-buttons button {
-  width: 45%;
+  width: 100%;
+  white-space: nowrap;
+  font-size: 0.8rem;
+  padding: 0.5rem 0.4rem;
 }
 
 /* ==================== COLLABORATORS TABLE ==================== */
@@ -176,7 +186,7 @@
   }
 
   .project-card {
-    width: 80%;
+    width: 90%;
   }
 
   .collaborators-section {
